@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PhytoPulse | Live Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            900: '#0a192f',
+                            800: '#112240',
+                            700: '#233554',
+                            light: '#64ffda',
+                            accent: '#4ade80',
+                            danger: '#ef4444',
+                            warning: '#fbbf24'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+
+<body class="bg-brand-900 text-slate-300 font-sans h-screen overflow-hidden flex antialiased">
+    <div
+        class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-800 via-brand-900 to-black opacity-80 pointer-events-none">
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-sidebar h-full flex flex-col pt-8 pb-6 px-4 z-10 shrink-0">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div
+                class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-brand-900 font-bold shadow-[0_0_10px_rgba(100,255,218,0.5)]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z">
+                    </path>
+                </svg>
+            </div>
+            <h2 class="text-xl font-bold tracking-tight text-white">Phyto<span class="text-brand-light">Pulse</span>
+            </h2>
+        </div>
+
+        <nav class="flex-1 space-y-2">
+            <a href="index.html"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                    </path>
+                </svg>
+                Home
+            </a>
+            <a href="#"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-brand-light bg-brand-light/10 border border-brand-light/20 transition-all shadow-[inset_0_0_15px_rgba(100,255,218,0.1)]">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                    </path>
+                </svg>
+                Live Monitor
+            </a>
+            <a href="encyclopedia.html"
+                class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253">
+                    </path>
+                </svg>
+                Encyclopedia
+            </a>
+
+            <div class="mt-8 pt-6 border-t border-white/10">
+                <p class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Crop Target</p>
+                <select id="crop-selector"
+                    class="w-full bg-brand-800/50 border border-white/10 text-white text-sm rounded-lg focus:ring-brand-light focus:border-brand-light block px-3 py-2.5 outline-none transition-colors">
+                    <option value="Tomato">Tomato (Solanum lycopersicum)</option>
+                    <option value="Rice">Rice (Oryza sativa)</option>
+                    <option value="Aloe Vera">Aloe Vera (Aloe barbadensis)</option>
+                    <option value="Corn">Corn (Zea mays)</option>
+                </select>
+            </div>
+        </nav>
+
+        <div class="mt-auto glass-panel rounded-xl p-4 border border-brand-light/30 bg-brand-light/5 text-center">
+            <div class="w-2 h-2 bg-brand-light rounded-full mb-2 mx-auto animate-pulse"></div>
+            <p class="text-xs text-brand-light font-medium">IoT Engine Online</p>
+            <p class="text-[10px] text-slate-500 mt-1" id="last-sync">Syncing...</p>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+        <!-- Header -->
+        <header class="h-20 glass-panel border-b border-white/10 flex items-center justify-between px-8 z-10 shrink-0">
+            <div>
+                <h1 class="text-2xl font-bold text-white tracking-tight">Electrophysiology Suite</h1>
+                <p class="text-sm text-slate-400">Real-time biopotential & environmental analysis</p>
+            </div>
+
+            <div class="flex items-center gap-4">
+                <!-- Status Pills -->
+                <div
+                    class="flex items-center gap-2 bg-brand-800/50 border border-brand-light/20 rounded-full px-4 py-1.5 shadow-[0_0_10px_rgba(100,255,218,0.1)]">
+                    <span class="text-xs text-slate-400 font-medium tracking-wide">STATE:</span>
+                    <span id="global-status" class="text-xs text-brand-light font-bold">NOMINAL</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
+
+            <!-- Top Metric Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Voltage -->
+                <div class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all">
+                    </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-semibold px-2 py-1 rounded bg-slate-800/80 text-slate-300 border border-white/5">AD8232</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Bio-Potential (Voltage)</h3>
+                    <div class="flex items-baseline gap-2">
+                        <span id="metric-voltage" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span class="text-sm text-blue-400 font-medium">mV</span>
+                    </div>
+                </div>
+
+                <!-- Temp -->
+                <div class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 w-24 h-24 bg-orange-500/10 rounded-full blur-2xl group-hover:bg-orange-500/20 transition-all">
+                    </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-orange-500/10 rounded-lg text-orange-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-semibold px-2 py-1 rounded bg-slate-800/80 text-slate-300 border border-white/5">Ambient</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Temperature</h3>
+                    <div class="flex items-baseline gap-2">
+                        <span id="metric-temp" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span class="text-sm text-orange-400 font-medium">°C</span>
+                    </div>
+                </div>
+
+                <!-- Moisture -->
+                <div class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div
+                        class="absolute -right-4 -top-4 w-24 h-24 bg-teal-500/10 rounded-full blur-2xl group-hover:bg-teal-500/20 transition-all">
+                    </div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-teal-500/10 rounded-lg text-teal-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="text-xs font-semibold px-2 py-1 rounded bg-slate-800/80 text-slate-300 border border-white/5">Soil</span>
+                    </div>
+                    <h3 class="text-slate-400 text-sm font-medium mb-1">Volumetric Water Content</h3>
+                    <div class="flex items-baseline gap-2">
+                        <span id="metric-moisture" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span class="text-sm text-teal-400 font-medium">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Charts & UI -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[450px]">
+
+                <!-- Chart Area -->
+                <div
+                    class="lg:col-span-2 glass-panel border border-white/10 rounded-2xl p-6 flex flex-col h-full relative">
+                    <!-- Alert Overlay -->
+                    <div id="diagnostic-alert"
+                        class="hidden absolute inset-x-4 top-4 z-20 bg-brand-danger/20 border border-brand-danger/50 rounded-xl p-4 backdrop-blur-md shadow-[0_0_30px_rgba(239,68,68,0.2)]">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 bg-brand-danger/20 rounded-lg text-brand-danger">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 id="alert-title"
+                                    class="text-brand-danger font-bold text-lg tracking-wide uppercase">Critical Alert
+                                </h3>
+                                <p id="alert-desc" class="text-sm text-white mt-1">Detecting anomaly...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-end mb-4 shrink-0">
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Live Waveform Analysis</h2>
+                            <p class="text-xs text-slate-400">High-frequency potential visualization</p>
+                        </div>
+                        <div class="flex gap-2">
+                            <!-- Toggle sim removed; fetch runs automatically on load -->
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full min-h-0 relative">
+                        <!-- Live Diagnostics Overlay -->
+                        <div id="analysis-console"
+                            class="absolute top-2 right-4 z-20 bg-brand-900/80 border border-brand-light/20 rounded-lg p-3 text-[10px] sm:text-xs text-brand-light font-mono shadow-[0_0_10px_rgba(100,255,218,0.1)] backdrop-blur-sm pointer-events-none transition-all duration-300">
+                            <ul class="space-y-1">
+                                <li class="flex items-center gap-2" id="console-step1"><span
+                                        class="w-1.5 h-1.5 rounded-full bg-brand-light animate-ping"></span> Scanning
+                                    signal...</li>
+                                <li class="flex items-center gap-2 text-slate-400" id="console-step2"><svg
+                                        class="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                            stroke-width="4"></circle>
+                                        <path class="opacity-75" fill="currentColor"
+                                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                        </path>
+                                    </svg> Analyzing peaks...</li>
+                                <li class="mt-2 pt-2 border-t border-brand-light/20 text-white font-bold"
+                                    id="console-status">Status: Normal</li>
+                            </ul>
+                        </div>
+                        <canvas id="bioChart" class="w-full h-full"></canvas>
+                    </div>
+                </div>
+
+                <!-- AI Doctor Chatbox -->
+                <div
+                    class="glass-panel border border-brand-light/20 shadow-[0_0_20px_rgba(100,255,218,0.05)] rounded-2xl flex flex-col h-full overflow-hidden bg-gradient-to-b from-brand-800/80 to-brand-900/80 relative">
+
+                    <div
+                        class="p-4 border-b border-brand-light/10 bg-brand-800/50 flex items-center justify-between shrink-0">
+                        <div class="flex items-center gap-3">
+                            <div class="relative">
+                                <div
+                                    class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-light to-blue-500 p-0.5">
+                                    <div
+                                        class="w-full h-full rounded-full bg-brand-900 flex items-center justify-center">
+                                        <svg class="w-5 h-5 text-brand-light" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div
+                                    class="absolute bottom-0 right-0 w-3 h-3 bg-brand-light border-2 border-brand-900 rounded-full">
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-white font-bold text-sm">AI Plant Doctor</h3>
+                                <p class="text-[10px] text-brand-light uppercase tracking-wider">Online & Analyzing</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-hide text-sm">
+                        <!-- Initial Message -->
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="w-8 h-8 rounded-full bg-brand-800 border border-brand-light/30 flex items-center justify-center shrink-0">
+                                <span class="text-brand-light text-xs font-bold">AI</span>
+                            </div>
+                            <div
+                                class="bg-brand-800/80 border border-white/5 rounded-2xl rounded-tl-sm p-3 text-slate-300">
+                                <p>System initialized. Monitoring incoming telemetry for <strong id="chat-crop-name"
+                                        class="text-brand-light">Tomato</strong>. Waiting for anomalies...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Input area -->
+                    <div class="p-3 border-t border-white/10 bg-brand-800/30 shrink-0">
+                        <div class="relative">
+                            <input type="text" id="chat-input" placeholder="Ask about treatment..."
+                                class="w-full bg-brand-900/80 border border-white/10 rounded-xl py-2 pl-4 pr-10 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-brand-light focus:ring-1 focus:ring-brand-light transition-colors pointer-events-none opacity-50"
+                                readonly>
+                            <button
+                                class="absolute right-2 top-1.5 p-1 text-slate-400 hover:text-brand-light transition-colors pointer-events-none">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script src="./js/store.js"></script>
+    <script src="./js/api.js"></script>
+    <script src="./js/chart-engine.js"></script>
+    <script src="./js/ai-doctor.js"></script>
+    <script src="./js/dashboard-init.js"></script>
+</body>
+
+</html>

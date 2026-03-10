@@ -1,3 +1,4 @@
+HEAD
 # 🌱 PhytoPulse
 
 **The Ultimate Plant Intelligence Platform**
@@ -67,3 +68,7 @@ To connect real hardware instead of using the built-in simulator:
 
 ## 📄 License
 © 2026 PhytoPulse Platforms. All rights reserved.
+
+# PhytoPulse
+PhytoPulse: An end-to-end IoT platform for real-time plant electrophysiology monitoring and automated disease diagnosis using ThingSpeak data.
+d91783056d9abf4fadc1c5048e5107e2acdd5d6f

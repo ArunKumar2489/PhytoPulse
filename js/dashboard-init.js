@@ -93,7 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (state.status === 'CRITICAL') {
             elDiagAlert.classList.remove('hidden');
-            elAlertTitle.innerText = state.currentDiagnostic.replace('_', ' ');
+            const alertText = state.currentDiagnostic ? state.currentDiagnostic.replace(/_/g, ' ') : 'System Anomaly Detected';
+            elAlertTitle.innerText = alertText;
         } else {
             elDiagAlert.classList.add('hidden');
         }

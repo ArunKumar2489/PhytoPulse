@@ -42,10 +42,17 @@ class IoTAPI {
             // Update store
             window.appStore.updateTelemetry({ voltage: voltage.toFixed(1), temp: temp.toFixed(1), moisture: moisture.toFixed(1) });
 
-            // Update individual sensor statuses
-            window.appStore.updateSensorStatus('voltage', { state: 'ONLINE', signal: Math.floor(95 + Math.random() * 5) });
-            window.appStore.updateSensorStatus('temp', { state: 'ONLINE', signal: Math.floor(90 + Math.random() * 5) });
-            window.appStore.updateSensorStatus('moisture', { state: 'ONLINE', signal: Math.floor(92 + Math.random() * 5) });
+            // Update individual sensor statuses with simulated connectivity fluctuations
+            const getSimStatus = (baseSignal) => {
+                const rand = Math.random();
+                if (rand > 0.95) return { state: 'OFFLINE', signal: 0 };
+                if (rand > 0.85) return { state: 'STALE', signal: Math.floor(baseSignal * 0.4) };
+                return { state: 'ONLINE', signal: Math.floor(baseSignal + (Math.random() * (100 - baseSignal))) };
+            };
+
+            window.appStore.updateSensorStatus('voltage', getSimStatus(95));
+            window.appStore.updateSensorStatus('temp', getSimStatus(90));
+            window.appStore.updateSensorStatus('moisture', getSimStatus(92));
 
             // Real-Time Stress Detection
             this.analyzeBiologicalState(voltage, moisture);

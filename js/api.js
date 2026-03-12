@@ -42,6 +42,11 @@ class IoTAPI {
             // Update store
             window.appStore.updateTelemetry({ voltage: voltage.toFixed(1), temp: temp.toFixed(1), moisture: moisture.toFixed(1) });
 
+            // Update individual sensor statuses
+            window.appStore.updateSensorStatus('voltage', { state: 'ONLINE', signal: Math.floor(95 + Math.random() * 5) });
+            window.appStore.updateSensorStatus('temp', { state: 'ONLINE', signal: Math.floor(90 + Math.random() * 5) });
+            window.appStore.updateSensorStatus('moisture', { state: 'ONLINE', signal: Math.floor(92 + Math.random() * 5) });
+
             // Real-Time Stress Detection
             this.analyzeBiologicalState(voltage, moisture);
 

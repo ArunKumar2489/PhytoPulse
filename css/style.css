@@ -36,3 +36,30 @@
   opacity: 0;
   animation: fadeInUp 0.8s ease-out forwards;
 }
+
+/* Plant Health Status Classes */
+.status-healthy {
+  color: #4ade80 !important; /* brand-accent */
+}
+
+.status-stress {
+  color: #fbbf24 !important; /* brand-warning */
+}
+
+.status-disease {
+  color: #ef4444 !important; /* brand-danger */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+.progress-bar {
+  transition: width 0.5s ease-in-out, background-color 0.5s ease-in-out;
+}

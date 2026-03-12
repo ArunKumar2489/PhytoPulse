@@ -14,7 +14,12 @@ class StateStore {
             },
             status: 'NOMINAL', // NOMINAL, WARNING, CRITICAL
             currentDiagnostic: null,
-            isSimulationMode: true
+            isSimulationMode: true,
+            sensorStatus: {
+                voltage: { state: 'ONLINE', signal: 98, lastSeen: Date.now() },
+                temp: { state: 'ONLINE', signal: 95, lastSeen: Date.now() },
+                moisture: { state: 'ONLINE', signal: 92, lastSeen: Date.now() }
+            }
         };
         this.listeners = [];
 
@@ -48,7 +53,19 @@ class StateStore {
 
     updateTelemetry(data) {
         this.state.telemetry = { ...this.state.telemetry, ...data };
+        // Update lastSeen for any sensor that provided data
+        const now = Date.now();
+        if (data.voltage !== undefined) this.state.sensorStatus.voltage.lastSeen = now;
+        if (data.temp !== undefined) this.state.sensorStatus.temp.lastSeen = now;
+        if (data.moisture !== undefined) this.state.sensorStatus.moisture.lastSeen = now;
         this.notify();
+    }
+
+    updateSensorStatus(sensor, statusUpdates) {
+        if (this.state.sensorStatus[sensor]) {
+            this.state.sensorStatus[sensor] = { ...this.state.sensorStatus[sensor], ...statusUpdates };
+            this.notify();
+        }
     }
 
     updateStatus(status, diagnostic = null) {

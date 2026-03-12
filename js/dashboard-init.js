@@ -4,9 +4,41 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // 0. Health Logic Rule Engine
+    const calculatePlantHealth = (soil, temp, status) => {
+        // Rule 1: Disease Suspected (🔴) -> Biosignal Patterns show anomalies (Store Status is CRITICAL)
+        if (status === 'CRITICAL') {
+            return {
+                label: 'DISEASE SUSPECTED',
+                class: 'status-disease',
+                icon: '🔴'
+            };
+        }
+
+        // Rule 2: Stress Detected (🟡) -> Soil Moisture is low OR Temp outside optimal range
+        const isMoistureLow = parseFloat(soil) < 30;
+        const isTempOutsideRange = parseFloat(temp) < 18 || parseFloat(temp) > 32;
+
+        if (isMoistureLow || isTempOutsideRange) {
+            return {
+                label: 'STRESS DETECTED',
+                class: 'status-stress',
+                icon: '🟡'
+            };
+        }
+
+        // Rule 3: Healthy (🟢) -> Normal ranges
+        return {
+            label: 'HEALTHY',
+            class: 'status-healthy',
+            icon: '🟢'
+        };
+    };
+
     // 1. Initialize Engines
     const chartEngine = new BiopotentialChart('bioChart');
     const aiDoctor = new AIDoctor();
+    const diagnosticsEngine = new DiagnosticsEngine();
 
     // 2. DOM Elements Mapping
     const elCropSelector = document.getElementById('crop-selector');
@@ -34,18 +66,35 @@ document.addEventListener('DOMContentLoaded', () => {
         elTemp.innerText = state.telemetry.temp || '--';
         elMoist.innerText = state.telemetry.moisture || '--';
 
-        // Update Global Status & Alert View
-        if (state.status === 'CRITICAL') {
-            elGlobalStatus.innerText = 'CRITICAL ALERT';
-            elGlobalStatus.className = 'text-xs text-brand-danger font-bold animate-pulse';
+        // Update Sensor Status Indicators
+        Object.keys(state.sensorStatus).forEach(sensor => {
+            const status = state.sensorStatus[sensor];
+            const elDot = document.getElementById(`status-dot-${sensor}`);
+            const elSignal = document.getElementById(`signal-${sensor}`);
+            const elSeen = document.getElementById(`seen-${sensor}`);
 
+            if (elDot) {
+                elDot.className = `w-2 h-2 rounded-full ${status.state === 'ONLINE' ? 'bg-brand-light' : 'bg-brand-warning'} animate-pulse`;
+            }
+            if (elSignal) {
+                elSignal.innerText = `${status.signal}%`;
+            }
+            if (elSeen) {
+                const lastSeen = new Date(status.lastSeen);
+                elSeen.innerText = lastSeen.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }
+        });
+
+        // Update Global Status & Alert View
+        const health = calculatePlantHealth(state.telemetry.moisture, state.telemetry.temp, state.status);
+        
+        elGlobalStatus.innerText = health.label;
+        elGlobalStatus.className = `text-xs font-bold ${health.class}`;
+
+        if (state.status === 'CRITICAL') {
             elDiagAlert.classList.remove('hidden');
             elAlertTitle.innerText = state.currentDiagnostic.replace('_', ' ');
-
         } else {
-            elGlobalStatus.innerText = 'NOMINAL';
-            elGlobalStatus.className = 'text-xs text-brand-light font-bold';
-
             elDiagAlert.classList.add('hidden');
         }
 

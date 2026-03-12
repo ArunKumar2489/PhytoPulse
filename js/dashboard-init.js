@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const chartEngine = new BiopotentialChart('bioChart');
     const aiDoctor = new AIDoctor();
     const diagnosticsEngine = new DiagnosticsEngine();
+    const growthTracker = new GrowthTracker();
 
     // 2. DOM Elements Mapping
     const elCropSelector = document.getElementById('crop-selector');

@@ -88,3 +88,95 @@
 .chart-container-premium {
   @apply glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group h-[300px];
 }
+
+/* Growth Tracking Timeline Styles */
+#growth-timeline-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+#growth-timeline-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+#growth-timeline-container::-webkit-scrollbar-thumb {
+  background: rgba(100, 255, 218, 0.2);
+  border-radius: 10px;
+}
+
+#growth-timeline-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 255, 218, 0.4);
+}
+
+#growth-timeline-container {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Mobile Responsive Overrides */
+@media (max-width: 768px) {
+  .glass-sidebar.active {
+    transform: translateX(0);
+  }
+
+  /* Stack main work areas */
+  main {
+    height: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .flex-1.overflow-y-auto {
+    overflow-y: visible !important;
+    padding: 1rem !important;
+  }
+
+  /* Grid Stacking */
+  .grid-cols-1, .md\:grid-cols-3, .lg\:grid-cols-3, .lg\:grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+
+  /* Height adjustments for mobile */
+  .h-\[450px\], .h-\[400px\] {
+    height: auto !important;
+    min-height: 350px;
+  }
+
+  /* Thumb-friendly interactive elements (Min 48px) */
+  button, 
+  select, 
+  input[type="text"], 
+  .time-range-btn, 
+  .factor-toggle-btn {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .time-range-btn, .factor-toggle-btn {
+    padding: 0 1.5rem !important;
+  }
+
+  #crop-selector {
+    height: 48px;
+  }
+
+  /* Header adjustments */
+  header.h-20 {
+    height: auto !important;
+    padding: 1.5rem 1rem !important;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  /* Chart containers should allow scrolling or resize */
+  canvas {
+    max-width: 100%;
+  }
+
+  /* Analytics Grid Stacking */
+  .analytics-grid {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+  }
+}

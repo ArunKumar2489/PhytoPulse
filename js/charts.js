@@ -315,6 +315,7 @@ class ElectrophysiologyMonitor {
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', () => {
     window.epMonitor = new ElectrophysiologyMonitor('waveform-chart');
+    window.impactAnalysis = new EnvironmentalImpactAnalysis('correlation-scatter-chart');
 });
 
 function updateTimeRange(range, btn) {
@@ -324,4 +325,147 @@ function updateTimeRange(range, btn) {
 
     // Update charts
     window.analytics.updateRange(range);
+}
+
+/**
+ * EnvironmentalImpactAnalysis
+ * Handles scatter plots and Pearson correlation calculation.
+ */
+class EnvironmentalImpactAnalysis {
+    constructor(canvasId) {
+        this.ctx = document.getElementById(canvasId);
+        if (!this.ctx) return;
+
+        this.currentFactor = 'temp';
+        this.chart = null;
+        this.initChart();
+    }
+
+    /**
+     * Pearson Correlation Coefficient Calculation
+     * Formula: r = Σ((x - x̄)(y - ȳ)) / sqrt(Σ(x - x̄)² * Σ(y - ȳ)²)
+     */
+    calculateCorrelation(x, y) {
+        const n = x.length;
+        if (n !== y.length || n === 0) return 0;
+
+        const meanX = x.reduce((a, b) => a + b) / n;
+        const meanY = y.reduce((a, b) => a + b) / n;
+
+        let num = 0;
+        let denX = 0;
+        let denY = 0;
+
+        for (let i = 0; i < n; i++) {
+            const dx = x[i] - meanX;
+            const dy = y[i] - meanY;
+            num += dx * dy;
+            denX += dx * dx;
+            denY += dy * dy;
+        }
+
+        const denominator = Math.sqrt(denX * denY);
+        return denominator === 0 ? 0 : num / denominator;
+    }
+
+    getScatterData(factor) {
+        // Generate realistic mock data for scatter plot
+        const points = [];
+        const xValues = [];
+        const yValues = [];
+        const count = 50;
+
+        for (let i = 0; i < count; i++) {
+            let x, y;
+            if (factor === 'temp') {
+                x = 20 + Math.random() * 15; // 20-35 degC
+                // Positive correlation: as temp rises, bio-signal increases (simulated)
+                y = 100 + (x * 10) + (Math.random() - 0.5) * 100;
+            } else if (factor === 'humidity') {
+                x = 40 + Math.random() * 40; // 40-80%
+                // Slight negative correlation or erratic
+                y = 500 - (x * 2) + (Math.random() - 0.5) * 200;
+            } else {
+                x = 10 + Math.random() * 80; // 10-90% moisture
+                // Strong positive correlation
+                y = 50 + (x * 8) + (Math.random() - 0.5) * 50;
+            }
+            points.push({ x, y });
+            xValues.push(x);
+            yValues.push(y);
+        }
+
+        return { points, xValues, yValues };
+    }
+
+    initChart() {
+        const dataSet = this.getScatterData(this.currentFactor);
+        const r = this.calculateCorrelation(dataSet.xValues, dataSet.yValues);
+        
+        document.getElementById('correlation-coefficient').innerText = r.toFixed(3);
+
+        this.chart = new Chart(this.ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Impact Points',
+                    data: dataSet.points,
+                    backgroundColor: 'rgba(100, 255, 218, 0.5)',
+                    borderColor: '#64ffda',
+                    borderWidth: 1,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        title: { 
+                            display: true, 
+                            text: this.getFactorLabel(this.currentFactor),
+                            color: '#64748b'
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b' }
+                    },
+                    y: {
+                        title: { 
+                            display: true, 
+                            text: 'Bio-Signal (mV)',
+                            color: '#64748b'
+                        },
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b' }
+                    }
+                }
+            }
+        });
+    }
+
+    getFactorLabel(factor) {
+        if (factor === 'temp') return 'Temperature (°C)';
+        if (factor === 'humidity') return 'Humidity (%)';
+        return 'Soil Moisture (%)';
+    }
+
+    updateFactor(factor, btn) {
+        // Update Button UI
+        document.querySelectorAll('.factor-toggle-btn').forEach(el => el.classList.remove('active'));
+        btn.classList.add('active');
+
+        this.currentFactor = factor;
+        const dataSet = this.getScatterData(factor);
+        const r = this.calculateCorrelation(dataSet.xValues, dataSet.yValues);
+        
+        document.getElementById('correlation-coefficient').innerText = r.toFixed(3);
+
+        this.chart.data.datasets[0].data = dataSet.points;
+        this.chart.options.scales.x.title.text = this.getFactorLabel(factor);
+        this.chart.update();
+    }
 }

@@ -35,13 +35,29 @@
     <link rel="stylesheet" href="./css/style.css">
 </head>
 
-<body class="bg-brand-900 text-slate-300 font-sans h-screen overflow-hidden flex antialiased">
+<body class="bg-brand-900 text-slate-300 font-sans md:h-screen md:overflow-hidden flex flex-col md:flex-row antialiased">
     <div
         class="fixed inset-0 z-[-1] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-800 via-brand-900 to-black opacity-80 pointer-events-none">
     </div>
 
+    <!-- Mobile Header -->
+    <header class="md:hidden h-16 glass-panel border-b border-white/10 flex items-center justify-between px-6 z-30 sticky top-0">
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-brand-900 font-bold">
+                <span class="text-[10px]">P</span>
+            </div>
+            <h2 class="text-lg font-bold text-white">Phyto<span class="text-brand-light">Pulse</span></h2>
+        </div>
+        <button id="mobile-menu-toggle" class="p-2 text-slate-400 hover:text-white transition-colors" aria-label="Toggle Menu">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path id="menu-icon" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                <path id="close-icon" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+        </button>
+    </header>
+
     <!-- Sidebar -->
-    <aside class="w-64 glass-sidebar h-full flex flex-col pt-8 pb-6 px-4 z-10 shrink-0">
+    <aside id="sidebar-nav" class="fixed inset-y-0 left-0 w-64 glass-sidebar h-full flex flex-col pt-8 pb-6 px-4 z-40 md:z-10 shrink-0 transform -translate-x-full md:translate-x-0 md:static transition-transform duration-300 ease-in-out">
         <div class="flex items-center gap-3 mb-10 px-2">
             <div
                 class="w-8 h-8 rounded-lg bg-gradient-to-br from-brand-light to-brand-accent flex items-center justify-center text-brand-900 font-bold shadow-[0_0_10px_rgba(100,255,218,0.5)]">
@@ -466,6 +482,80 @@
                 </div>
             </section>
 
+            <!-- Plant Growth Tracking System -->
+            <section id="growth-tracking-system" class="space-y-6 pt-12 border-t border-white/5">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight">Plant Growth Tracking System</h2>
+                        <p class="text-sm text-slate-400">Monitor physical development and growth stages</p>
+                    </div>
+                    <div id="growth-rate-status" class="bg-brand-light/10 border border-brand-light/30 rounded-xl px-4 py-2 flex items-center gap-3">
+                        <span class="text-xs text-slate-400 uppercase font-bold tracking-widest">Growth Rate:</span>
+                        <span id="predicted-growth-rate" class="text-lg font-mono font-bold text-brand-light">--</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <!-- Upload Form Card -->
+                    <div class="lg:col-span-1 glass-panel border border-brand-light/20 rounded-2xl p-6 bg-brand-light/5">
+                        <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                            </svg>
+                            Log Image
+                        </h3>
+                        <form id="growth-upload-form" class="space-y-4">
+                            <div>
+                                <label class="block text-xs uppercase text-slate-500 font-bold mb-1.5">Select Image</label>
+                                <div class="relative group">
+                                    <input type="file" id="growth-image-input" accept="image/*" class="hidden">
+                                    <label for="growth-image-input" class="w-full h-32 border-2 border-dashed border-white/10 rounded-xl flex flex-col items-center justify-center cursor-pointer hover:border-brand-light/50 hover:bg-brand-light/5 transition-all group overflow-hidden relative">
+                                        <div id="image-preview-container" class="absolute inset-0 hidden">
+                                            <img id="image-preview" src="" class="w-full h-full object-cover opacity-60">
+                                        </div>
+                                        <div id="upload-placeholder" class="flex flex-col items-center z-10">
+                                            <svg class="w-8 h-8 text-slate-500 group-hover:text-brand-light mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            </svg>
+                                            <span class="text-xs text-slate-500 group-hover:text-brand-light font-medium">Capture or Upload</span>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs uppercase text-slate-500 font-bold mb-1.5">Growth Stage</label>
+                                <select id="growth-stage-input" class="w-full bg-brand-900 border border-white/10 text-white text-sm rounded-lg px-3 py-2 outline-none focus:ring-1 focus:ring-brand-light transition-all">
+                                    <option value="Germination">Germination</option>
+                                    <option value="Vegetative">Vegetative</option>
+                                    <option value="Flowering">Flowering</option>
+                                    <option value="Fruiting">Fruiting</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="w-full py-2.5 bg-brand-light text-brand-900 font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_20px_rgba(100,255,218,0.3)]">
+                                Add to Log
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Growth Timeline Gallery -->
+                    <div class="lg:col-span-3 glass-panel border border-white/10 rounded-2xl p-6 flex flex-col h-[400px]">
+                        <h3 class="text-white font-bold mb-4 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-brand-light" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                            </svg>
+                            Growth Timeline
+                        </h3>
+                        <div id="growth-timeline-container" class="flex-1 flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                            <!-- Cards will be injected here -->
+                            <div class="flex flex-col items-center justify-center w-full text-slate-500 italic text-sm">
+                                <p>No growth logs yet. Upload your first capture to start tracking.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <!-- Analytics Dashboard Section -->
             <section id="analytics-dashboard" class="space-y-6 pt-12 border-t border-white/5 pb-12">
                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -526,6 +616,35 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Environmental Impact Analysis (Correlation) -->
+            <section id="correlation-analysis" class="space-y-6 pt-12 border-t border-white/5 pb-24">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white tracking-tight">Environmental Impact Analysis</h2>
+                        <p class="text-sm text-slate-400">Correlation mapping between environmental factors and bio-signals</p>
+                    </div>
+                    
+                    <div class="flex flex-wrap items-center gap-4">
+                        <div class="bg-brand-800/80 border border-brand-light/20 rounded-xl px-4 py-2 flex items-center gap-3">
+                            <span class="text-xs text-slate-400 uppercase font-bold tracking-widest">Pearson Coefficient (r):</span>
+                            <span id="correlation-coefficient" class="text-lg font-mono font-bold text-brand-light">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel border border-white/10 rounded-2xl p-6">
+                    <div class="flex items-center gap-4 mb-6 bg-brand-800/50 p-1 border border-white/10 rounded-xl w-fit">
+                        <button class="factor-toggle-btn active" onclick="window.impactAnalysis.updateFactor('temp', this)">Temperature vs. Bio-Signal</button>
+                        <button class="factor-toggle-btn" onclick="window.impactAnalysis.updateFactor('humidity', this)">Humidity vs. Bio-Signal</button>
+                        <button class="factor-toggle-btn" onclick="window.impactAnalysis.updateFactor('moisture', this)">Soil Moisture vs. Bio-Signal</button>
+                    </div>
+
+                    <div class="h-[400px] w-full relative">
+                        <canvas id="correlation-scatter-chart"></canvas>
+                    </div>
+                </div>
+            </section>
         </div>
     </main>
 
@@ -534,7 +653,11 @@
     <script src="./js/chart-engine.js"></script>
     <script src="./js/ai-doctor.js"></script>
     <script src="./js/charts.js"></script>
+    <script src="./js/growth-tracker.js"></script>
+    <script src="./js/responsive.js"></script>
     <script src="./js/dashboard-init.js"></script>
+    <!-- Mobile Menu Overlay -->
+    <div id="mobile-overlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-30 hidden md:hidden"></div>
     <!-- Alert Toast Container -->
     <div id="alert-toast-container" class="fixed bottom-8 right-8 z-[100] w-80 space-y-3 pointer-events-none child:pointer-events-auto">
         <!-- Toasts injected via JS -->

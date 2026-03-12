@@ -19,8 +19,14 @@ class StateStore {
                 voltage: { state: 'ONLINE', signal: 98, lastSeen: Date.now() },
                 temp: { state: 'ONLINE', signal: 95, lastSeen: Date.now() },
                 moisture: { state: 'ONLINE', signal: 92, lastSeen: Date.now() }
-            }
+            },
+            growthLog: [] // Array of { image: base64, stage: string, timestamp: number }
         };
+        // Ensure growthLog exists (backward compatibility)
+        if (!this.state.growthLog) {
+            this.state.growthLog = [];
+        }
+
         this.listeners = [];
 
         // Listen to updates from other tabs
@@ -74,6 +80,14 @@ class StateStore {
             this.state.currentDiagnostic = diagnostic;
             this.notify();
         }
+    }
+
+    addGrowthEntry(entry) {
+        this.state.growthLog.push({
+            ...entry,
+            timestamp: Date.now()
+        });
+        this.notify();
     }
 }
 

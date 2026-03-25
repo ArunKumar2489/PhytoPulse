@@ -65,20 +65,20 @@ class BiopotentialChart {
     }
 
     onStateChange(state) {
-        const voltage = parseFloat(state.telemetry.voltage);
+        const signalValue = parseFloat(state.telemetry.light || state.telemetry.moisture || 0);
 
         // Push to raw buffer
-        this.rawBuffer.push(voltage);
+        this.rawBuffer.push(signalValue);
         if (this.rawBuffer.length > this.smoothingWindow) {
             this.rawBuffer.shift();
         }
 
         // Calculate Simple Moving Average (SMA)
         const sum = this.rawBuffer.reduce((a, b) => a + b, 0);
-        const smaVoltage = sum / this.rawBuffer.length;
+        const smaSignal = sum / this.rawBuffer.length;
 
         // Push smoothed value to visual chart data
-        this.dataPoints.push(smaVoltage);
+        this.dataPoints.push(smaSignal);
         if (this.dataPoints.length > this.maxPoints) {
             this.dataPoints.shift();
         }

@@ -35,19 +35,18 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
-    // 1. Initialize Engines
     const chartEngine = new BiopotentialChart('bioChart');
     const aiDoctor = new AIDoctor();
-    const diagnosticsEngine = new DiagnosticsEngine();
     const growthTracker = new GrowthTracker();
 
     // 2. DOM Elements Mapping
     const elCropSelector = document.getElementById('crop-selector');
 
     // Metrics
-    const elVol = document.getElementById('metric-voltage');
-    const elTemp = document.getElementById('metric-temp');
-    const elMoist = document.getElementById('metric-moisture');
+    const elHum = document.getElementById('hum-val');
+    const elTemp = document.getElementById('temp-val');
+    const elMoist = document.getElementById('soil-val');
+    const elLight = document.getElementById('light-val');
 
     // Status
     const elGlobalStatus = document.getElementById('global-status');
@@ -63,9 +62,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. Subscribe to Store Updates to update DOM
     window.appStore.subscribe((state) => {
         // Update Metric Displays
-        elVol.innerText = state.telemetry.voltage || '--';
-        elTemp.innerText = state.telemetry.temp || '--';
-        elMoist.innerText = state.telemetry.moisture || '--';
+        if (elHum && state.telemetry.humidity !== undefined) elHum.innerText = state.telemetry.humidity;
+        if (elTemp && state.telemetry.temp !== undefined) elTemp.innerText = state.telemetry.temp;
+        if (elMoist && state.telemetry.moisture !== undefined) elMoist.innerText = state.telemetry.moisture;
+        if (elLight && state.telemetry.light !== undefined) elLight.innerText = state.telemetry.light;
 
         // Update Sensor Status Indicators
         Object.keys(state.sensorStatus).forEach(sensor => {

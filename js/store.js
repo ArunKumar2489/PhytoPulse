@@ -8,17 +8,19 @@ class StateStore {
         this.state = saved ? JSON.parse(saved) : {
             crop: 'Tomato',
             telemetry: {
-                voltage: 0,
                 temp: 24.5,
-                moisture: 60
+                humidity: 50,
+                moisture: 60,
+                light: 400
             },
             status: 'NOMINAL', // NOMINAL, WARNING, CRITICAL
             currentDiagnostic: null,
             isSimulationMode: true,
             sensorStatus: {
-                voltage: { state: 'ONLINE', signal: 98, lastSeen: Date.now() },
                 temp: { state: 'ONLINE', signal: 95, lastSeen: Date.now() },
-                moisture: { state: 'ONLINE', signal: 92, lastSeen: Date.now() }
+                humidity: { state: 'ONLINE', signal: 98, lastSeen: Date.now() },
+                moisture: { state: 'ONLINE', signal: 92, lastSeen: Date.now() },
+                light: { state: 'ONLINE', signal: 90, lastSeen: Date.now() }
             },
             growthLog: [] // Array of { image: base64, stage: string, timestamp: number }
         };
@@ -61,9 +63,10 @@ class StateStore {
         this.state.telemetry = { ...this.state.telemetry, ...data };
         // Update lastSeen for any sensor that provided data
         const now = Date.now();
-        if (data.voltage !== undefined) this.state.sensorStatus.voltage.lastSeen = now;
         if (data.temp !== undefined) this.state.sensorStatus.temp.lastSeen = now;
+        if (data.humidity !== undefined) this.state.sensorStatus.humidity.lastSeen = now;
         if (data.moisture !== undefined) this.state.sensorStatus.moisture.lastSeen = now;
+        if (data.light !== undefined) this.state.sensorStatus.light.lastSeen = now;
         this.notify();
     }
 

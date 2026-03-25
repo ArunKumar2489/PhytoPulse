@@ -42,12 +42,12 @@ async function fetchThingSpeakData() {
             // Real-Time Stress Analysis
             analyzePlantHealth(feed);
 
-            // Real-Time Diagnostic Engine
-            runExpertSystem(
-                parseFloat(feed.field1),
-                parseFloat(feed.field2),
-                parseFloat(feed.field3),
-                parseFloat(feed.field4)
+            // Real-Time Crop Intelligence Hub
+            evaluateCropHealth(
+                parseFloat(feed.field1) || 0, // Temp
+                parseFloat(feed.field2) || 0, // Hum
+                parseFloat(feed.field3) || 0, // Soil
+                parseFloat(feed.field4) || 0  // Bio
             );
         }
     } catch (error) {
@@ -123,57 +123,109 @@ function analyzePlantHealth(feed) {
     }
 }
 
-function runExpertSystem(temp, hum, soil, light) {
-    const alertStatus = document.getElementById('alert-status');
-    const rootCause = document.getElementById('root-cause');
-    const diseasePrediction = document.getElementById('disease-prediction');
-    const treatmentPlan = document.getElementById('treatment-plan');
-    const diagnosticCenter = document.getElementById('diagnostic-center');
+function evaluateCropHealth(temp, hum, soil, bio) {
+    const activeDiseaseAlert = document.getElementById('active-disease-alert');
+    const predictedRiskAlert = document.getElementById('predicted-risk-alert');
+    const affectedDisease = document.getElementById('affected-disease');
+    const rootCause = document.getElementById('root-cause-diagnosis');
+    const immediateSolution = document.getElementById('immediate-solution');
+    const possibleFutureDiseases = document.getElementById('possible-future-diseases');
+    
+    // Warning Panels
+    const activeWarningPanel = document.getElementById('active-diseases-warning');
+    const riskWarningPanel = document.getElementById('predicted-risks-warning');
 
-    if (!alertStatus || !rootCause || !diseasePrediction || !treatmentPlan) return;
+    if (!activeDiseaseAlert) return;
 
-    let alert = 'Normal';
-    let cause = 'Conditions within bounds';
-    let disease = 'None';
-    let treatment = 'Maintain current schedule';
+    let active = 'None';
+    let risk = 'None';
+    let cause = 'Optimal Conditions';
+    let solution = 'Maintain current schedule';
+    let trend = 'Stable';
+    let isCritical = false;
+    let isWarning = false;
 
-    if (hum > 80 && temp < 25) {
-        alert = 'High Risk';
-        cause = 'Excessive humidity and cool air';
-        disease = 'Downy Mildew or Leaf Spot';
-        treatment = 'Reduce misting and apply organic fungicide';
-    } else if (temp > 38 && soil < 20) {
-        alert = 'Critical';
-        cause = 'High evaporation and low moisture';
-        disease = 'Bacterial Wilt';
-        treatment = 'Increase irrigation frequency and provide 50% shade';
-    } else if (soil > 90) {
-        alert = 'Warning';
-        cause = 'Waterlogging/Poor drainage';
-        disease = 'Pythium Root Rot';
-        treatment = 'Stop watering and aerate the soil';
+    // Evaluate base logic
+    if (temp > 35) {
+        cause = 'Heat Stress';
+        solution = 'Increase ventilation, apply misting';
+        isWarning = true;
+    } else if (temp < 15) {
+        cause = 'Cold Stress';
+        solution = 'Provide heating/insulation';
+        isWarning = true;
+    }
+    
+    if (soil < 30) {
+        cause = 'Hydration deficit';
+        solution = 'Increase irrigation frequency';
+        isWarning = true;
+    } else if (soil > 80) {
+        cause = 'Excess hydration';
+        solution = 'Improve drainage, pause watering';
+        isWarning = true;
     }
 
-    alertStatus.innerText = alert;
+    if (bio < 300) { // Erratic/Low bio signal
+        cause += ' (Plant Stress Detected from Bio-Signal)';
+        solution += ' (Monitor Closely)';
+        isWarning = true;
+    }
+    
+    // Specific Disease Intelligence overrides
+    if (hum > 85 && temp < 24) {
+        active = 'Powdery Mildew';
+        risk = 'Botrytis Cinerea';
+        cause = 'High humidity with cool air';
+        solution = 'Improve airflow & apply organic fungicide';
+        isCritical = true;
+        trend = 'Fungal proliferation highly likely';
+    } else if (soil < 20 && bio < 300) {
+        active = 'Dehydration';
+        risk = 'Leaf Scorching';
+        cause = 'Critical moisture loss & weak bio-signal';
+        solution = 'Immediate deep watering & provide shade';
+        isCritical = true;
+        trend = 'Rapid cellular damage occurring';
+    } else if (soil > 90 && hum > 80) {
+        active = 'Root Rot';
+        risk = 'Fungus Gnats';
+        cause = 'Waterlogging & excessive ambient moisture';
+        solution = 'Stop watering, aerate soil, apply H2O2 drench';
+        isCritical = true;
+        trend = 'Root suffocation imminent';
+    }
+
+    // Update UI
+    activeDiseaseAlert.innerText = active;
+    predictedRiskAlert.innerText = risk;
+    affectedDisease.innerText = active;
     rootCause.innerText = cause;
-    diseasePrediction.innerText = disease;
-    treatmentPlan.innerHTML = `<li>${treatment}</li>`;
+    immediateSolution.innerText = solution;
+    possibleFutureDiseases.innerText = risk;
+    
+    const trendAnalysis = document.getElementById('trend-analysis');
+    if (trendAnalysis) trendAnalysis.innerText = trend;
 
-    // Visual formatting based on alert level
-    alertStatus.className = 'text-lg font-bold transition-all duration-300';
-    if (diagnosticCenter) {
-        diagnosticCenter.classList.remove('bg-red-500/20', 'border-red-500/50', 'bg-orange-500/20', 'border-orange-500/50', 'bg-green-500/20', 'border-green-500/50', 'border-white/10');
+    // Visual formatting for Warning Panels
+    if (activeWarningPanel) {
+        activeWarningPanel.classList.remove('bg-red-500/20', 'border-red-500/50', 'bg-brand-800/50', 'border-white/5');
+        if (isCritical || active !== 'None') {
+            activeWarningPanel.classList.add('bg-red-500/20', 'border-red-500/50');
+            activeWarningPanel.querySelector('svg').classList.add('animate-pulse');
+        } else {
+            activeWarningPanel.classList.add('bg-brand-800/50', 'border-white/5');
+            activeWarningPanel.querySelector('svg').classList.remove('animate-pulse');
+        }
     }
 
-    if (alert === 'Critical') {
-        alertStatus.classList.add('text-red-500', 'animate-pulse');
-        if (diagnosticCenter) diagnosticCenter.classList.add('bg-red-500/20', 'border-red-500/50');
-    } else if (alert === 'High Risk' || alert === 'Warning') {
-        alertStatus.classList.add('text-orange-500');
-        if (diagnosticCenter) diagnosticCenter.classList.add('bg-orange-500/20', 'border-orange-500/50');
-    } else {
-        alertStatus.classList.add('text-green-500');
-        if (diagnosticCenter) diagnosticCenter.classList.add('bg-green-500/20', 'border-green-500/50');
+    if (riskWarningPanel) {
+        riskWarningPanel.classList.remove('bg-yellow-500/20', 'border-yellow-500/50', 'bg-brand-800/50', 'border-white/5');
+        if ((isCritical || isWarning || risk !== 'None') && risk !== 'None') {
+            riskWarningPanel.classList.add('bg-yellow-500/20', 'border-yellow-500/50');
+        } else {
+            riskWarningPanel.classList.add('bg-brand-800/50', 'border-white/5');
+        }
     }
 }
 

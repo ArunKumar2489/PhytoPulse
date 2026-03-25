@@ -122,7 +122,7 @@
         <div class="mt-auto glass-panel rounded-xl p-4 border border-brand-light/30 bg-brand-light/5 text-center">
             <div class="w-2 h-2 bg-brand-light rounded-full mb-2 mx-auto animate-pulse"></div>
             <p class="text-xs text-brand-light font-medium">IoT Engine Online</p>
-            <p class="text-[10px] text-slate-500 mt-1" id="last-sync">Syncing...</p>
+            <p class="text-[10px] text-slate-500 mt-1" id="sync-status">Syncing...</p>
         </div>
     </aside>
 
@@ -149,7 +149,7 @@
         <div class="flex-1 overflow-y-auto p-8 space-y-6 scrollbar-hide">
 
             <!-- Top Metric Cards -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Voltage -->
                 <div class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
                     <div
@@ -168,19 +168,14 @@
                         </div>
                     </div>
                     <div class="flex justify-between items-end mb-1">
-                        <h3 class="text-slate-400 text-sm font-medium">Bio-Potential</h3>
+                        <h3 class="text-slate-400 text-sm font-medium">Humidity</h3>
                         <div class="flex items-center gap-1.5">
-                            <div class="flex gap-0.5 items-end h-3 w-4">
-                                <div class="w-1 h-1 bg-brand-light rounded-t-sm"></div>
-                                <div class="w-1 h-2 bg-brand-light rounded-t-sm"></div>
-                                <div class="w-1 h-3 bg-brand-light rounded-t-sm"></div>
-                            </div>
-                            <span id="signal-voltage" class="text-[10px] text-brand-light font-bold">98%</span>
+                            <span id="signal-hum" class="text-[10px] text-brand-light font-bold"></span>
                         </div>
                     </div>
                     <div class="flex items-baseline gap-2">
-                        <span id="metric-voltage" class="text-4xl font-bold text-white tracking-tight">--</span>
-                        <span class="text-sm text-blue-400 font-medium">mV</span>
+                        <span id="hum-val" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span class="text-sm text-blue-400 font-medium">%</span>
                     </div>
                     <p class="text-[9px] text-slate-500 mt-2">Last Update: <span id="seen-voltage">--</span></p>
                 </div>
@@ -206,16 +201,11 @@
                     <div class="flex justify-between items-end mb-1">
                         <h3 class="text-slate-400 text-sm font-medium">Temperature</h3>
                         <div class="flex items-center gap-1.5">
-                            <div class="flex gap-0.5 items-end h-3 w-4">
-                                <div class="w-1 h-1 bg-brand-light rounded-t-sm"></div>
-                                <div class="w-1 h-2 bg-brand-light rounded-t-sm"></div>
-                                <div class="w-1 h-3 bg-brand-light rounded-t-sm"></div>
-                            </div>
-                            <span id="signal-temp" class="text-[10px] text-brand-light font-bold">95%</span>
+                            <span id="signal-temp" class="text-[10px] text-brand-light font-bold"></span>
                         </div>
                     </div>
                     <div class="flex items-baseline gap-2">
-                        <span id="metric-temp" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span id="temp-val" class="text-4xl font-bold text-white tracking-tight">--</span>
                         <span class="text-sm text-orange-400 font-medium">°C</span>
                     </div>
                     <p class="text-[9px] text-slate-500 mt-2">Last Update: <span id="seen-temp">--</span></p>
@@ -242,19 +232,41 @@
                     <div class="flex justify-between items-end mb-1">
                         <h3 class="text-slate-400 text-sm font-medium">Soil Moisture</h3>
                         <div class="flex items-center gap-1.5">
-                            <div class="flex gap-0.5 items-end h-3 w-4">
-                                <div class="w-1 h-1 bg-brand-light rounded-t-sm"></div>
-                                <div class="w-1 h-2 bg-brand-light rounded-t-sm"></div>
-                                <div class="w-1 h-3 bg-brand-light rounded-t-sm"></div>
-                            </div>
-                            <span id="signal-moisture" class="text-[10px] text-brand-light font-bold">92%</span>
+                            <span id="signal-moisture" class="text-[10px] text-brand-light font-bold"></span>
                         </div>
                     </div>
                     <div class="flex items-baseline gap-2">
-                        <span id="metric-moisture" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span id="soil-val" class="text-4xl font-bold text-white tracking-tight">--</span>
                         <span class="text-sm text-teal-400 font-medium">%</span>
                     </div>
                     <p class="text-[9px] text-slate-500 mt-2">Last Update: <span id="seen-moisture">--</span></p>
+                </div>
+
+                <!-- Light -->
+                <div class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-yellow-500/10 rounded-full blur-2xl group-hover:bg-yellow-500/20 transition-all"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="p-2 bg-yellow-500/10 rounded-lg text-yellow-400">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <div id="status-dot-light" class="w-2 h-2 rounded-full bg-brand-light animate-pulse"></div>
+                            <span class="text-xs font-semibold px-2 py-1 rounded bg-slate-800/80 text-slate-300 border border-white/5">Env</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-end mb-1">
+                        <h3 class="text-slate-400 text-sm font-medium">Light Level</h3>
+                        <div class="flex items-center gap-1.5">
+                            <span id="signal-light" class="text-[10px] text-brand-light font-bold"></span>
+                        </div>
+                    </div>
+                    <div class="flex items-baseline gap-2">
+                        <span id="light-val" class="text-4xl font-bold text-white tracking-tight">--</span>
+                        <span class="text-sm text-yellow-400 font-medium">lx</span>
+                    </div>
+                    <p class="text-[9px] text-slate-500 mt-2">Last Update: <span id="seen-light">--</span></p>
                 </div>
             </div>
             

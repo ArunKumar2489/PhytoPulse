@@ -41,6 +41,14 @@ async function fetchThingSpeakData() {
 
             // Real-Time Stress Analysis
             analyzePlantHealth(feed);
+
+            // AI Diagnostic Report
+            analyzeCropHealth(
+                parseFloat(feed.field1),
+                parseFloat(feed.field2),
+                parseFloat(feed.field3),
+                parseFloat(feed.field4)
+            );
         }
     } catch (error) {
         console.error("Error fetching ThingSpeak data:", error);
@@ -112,6 +120,48 @@ function analyzePlantHealth(feed) {
 
     if (window.appStore) {
         window.appStore.updateStatus(statusCode, null);
+    }
+}
+
+function analyzeCropHealth(temp, hum, soil, light) {
+    const diagnosticOutput = document.getElementById('diagnostic-output');
+    const detectedIssue = document.getElementById('detected-issue');
+    const recommendedAction = document.getElementById('recommended-action');
+
+    if (!diagnosticOutput || !detectedIssue || !recommendedAction) return;
+
+    let issue = 'No Stress Detected';
+    let action = 'Continue current maintenance.';
+    let isHealthy = true;
+
+    // Scenario A (Root Rot/Overwatering)
+    if (soil > 80 && hum > 70) {
+        issue = 'Potential Root Rot';
+        action = 'Stop irrigation immediately and check drainage.';
+        isHealthy = false;
+    }
+    // Scenario B (Heat Stress/Wilting)
+    else if (temp > 38 && soil < 30) {
+        issue = 'Acute Heat Stress';
+        action = 'Activate misting system or provide shade.';
+        isHealthy = false;
+    }
+    // Scenario C (Fungal Growth)
+    else if (hum > 85 && temp >= 20 && temp <= 25) {
+        issue = 'High Fungal Risk (Powdery Mildew)';
+        action = 'Increase ventilation and reduce humidity.';
+        isHealthy = false;
+    }
+
+    detectedIssue.innerText = issue;
+    recommendedAction.innerText = action;
+
+    // Visual Feedback
+    diagnosticOutput.classList.remove('bg-green-500/20', 'border-green-500/50', 'bg-orange-500/20', 'border-orange-500/50', 'border-white/10');
+    if (isHealthy) {
+        diagnosticOutput.classList.add('bg-green-500/20', 'border-green-500/50');
+    } else {
+        diagnosticOutput.classList.add('bg-orange-500/20', 'border-orange-500/50');
     }
 }
 

@@ -272,6 +272,29 @@
                     <p class="text-[9px] text-slate-500 mt-2">Last Update: <span id="seen-light">--</span></p>
                 </div>
             </div>
+
+            <!-- AI Diagnostic Report Card -->
+            <div id="diagnostic-output" class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group transition-all duration-300">
+                <div class="absolute -right-4 -top-4 w-24 h-24 bg-brand-light/5 rounded-full blur-2xl group-hover:bg-brand-light/10 transition-all"></div>
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-brand-light/10 rounded-lg text-brand-light">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-white font-bold text-sm tracking-wide uppercase">AI Diagnostic Report</h3>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Detected Issue</p>
+                        <span id="detected-issue" class="text-lg font-bold text-white">--</span>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Recommended Action</p>
+                        <span id="recommended-action" class="text-sm font-medium text-slate-300">--</span>
+                    </div>
+                </div>
+            </div>
             
             <!-- Advanced Diagnostics Card -->
             <div class="glass-panel border border-white/10 rounded-2xl p-6 relative overflow-hidden group">

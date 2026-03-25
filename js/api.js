@@ -26,8 +26,69 @@ async function fetchThingSpeakData() {
 
             const syncStatus = document.getElementById('sync-status');
             if (syncStatus) {
-                const now = new Date();
+                const now = feed.created_at ? new Date(feed.created_at) : new Date();
                 syncStatus.innerText = `Last Sync: ${now.toLocaleTimeString()}`;
+            }
+
+            // Real-Time Stress Analysis
+            const plantHealth = document.getElementById('plant-health');
+            const cardTemp = document.getElementById('card-temp');
+            const cardHum = document.getElementById('card-hum');
+            const cardSoil = document.getElementById('card-soil');
+
+            if (plantHealth) {
+                const soil = parseFloat(feed.field3);
+                const temp = parseFloat(feed.field1);
+
+                // Reset cards to default
+                const resetCard = (card) => {
+                    if (card) {
+                        card.classList.remove('border-red-500', 'bg-red-500/10', 'border-orange-500', 'bg-orange-500/10', 'border-green-500', 'bg-green-500/10');
+                        card.classList.add('border-white/10');
+                    }
+                };
+                
+                resetCard(cardTemp);
+                resetCard(cardHum);
+                resetCard(cardSoil);
+
+                let healthText = 'STATUS: NORMAL';
+                let healthClass = 'px-4 py-1.5 rounded-full text-xs font-bold border transition-colors duration-300 bg-slate-800/50 text-slate-300 border-slate-500'.split(' ');
+
+                if (soil < 30) {
+                    healthText = 'CRITICAL: WATER NEEDED';
+                    healthClass = 'px-4 py-1.5 rounded-full text-xs font-bold border transition-colors duration-300 bg-red-500/20 text-red-500 border-red-500/50 animate-pulse'.split(' ');
+                    if (cardSoil) {
+                        cardSoil.classList.remove('border-white/10');
+                        cardSoil.classList.add('border-red-500', 'bg-red-500/10');
+                    }
+                } else if (temp > 35) {
+                    healthText = 'WARNING: HEAT STRESS';
+                    healthClass = 'px-4 py-1.5 rounded-full text-xs font-bold border transition-colors duration-300 bg-orange-500/20 text-orange-500 border-orange-500/50'.split(' ');
+                    if (cardTemp) {
+                        cardTemp.classList.remove('border-white/10');
+                        cardTemp.classList.add('border-orange-500', 'bg-orange-500/10');
+                    }
+                } else if (soil >= 40 && soil <= 70 && temp >= 20 && temp <= 30) {
+                     healthText = 'STATUS: OPTIMAL';
+                     healthClass = 'px-4 py-1.5 rounded-full text-xs font-bold border transition-colors duration-300 bg-green-500/20 text-green-500 border-green-500/50'.split(' ');
+                     if (cardTemp) {
+                         cardTemp.classList.remove('border-white/10');
+                         cardTemp.classList.add('border-green-500', 'bg-green-500/10');
+                     }
+                     if (cardSoil) {
+                         cardSoil.classList.remove('border-white/10');
+                         cardSoil.classList.add('border-green-500', 'bg-green-500/10');
+                     }
+                     if (cardHum) {
+                         cardHum.classList.remove('border-white/10');
+                         cardHum.classList.add('border-green-500', 'bg-green-500/10');
+                     }
+                }
+
+                plantHealth.innerText = healthText;
+                plantHealth.className = '';
+                plantHealth.classList.add(...healthClass);
             }
         }
     } catch (error) {

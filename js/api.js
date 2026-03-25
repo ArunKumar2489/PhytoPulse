@@ -135,109 +135,54 @@ function analyzePlantHealth(feed) {
 }
 
 function evaluateCropHealth(temp, hum, soil, bio) {
-    const activeDiseaseAlert = document.getElementById('active-disease-alert');
-    const predictedRiskAlert = document.getElementById('predicted-risk-alert');
-    const affectedDisease = document.getElementById('affected-disease');
-    const rootCause = document.getElementById('root-cause-diagnosis');
-    const immediateSolution = document.getElementById('immediate-solution');
-    const possibleFutureDiseases = document.getElementById('possible-future-diseases');
+    const activeDiseaseEl = document.getElementById('active-disease');
+    const riskForecastEl = document.getElementById('risk-forecast');
+    const solutionStepsEl = document.getElementById('solution-steps');
+    const cropSelector = document.getElementById('crop-selector');
     
-    // Warning Panels
-    const activeWarningPanel = document.getElementById('active-diseases-warning');
-    const riskWarningPanel = document.getElementById('predicted-risks-warning');
+    if (!activeDiseaseEl) return;
 
-    if (!activeDiseaseAlert) return;
+    let crop = cropSelector ? cropSelector.value : 'Tomato';
+    let soil_min = 30; // Default
+    if (crop === 'Tomato') soil_min = 50;
+    if (crop === 'Aloe Vera') soil_min = 20;
 
-    let active = 'None';
+    let disease = 'None';
     let risk = 'None';
-    let cause = 'Optimal Conditions';
-    let solution = 'Maintain current schedule';
-    let trend = 'Stable';
+    let solution = 'Optimal conditions maintained.';
     let isCritical = false;
-    let isWarning = false;
 
-    // Evaluate base logic
-    if (temp > 35) {
-        cause = 'Heat Stress';
-        solution = 'Increase ventilation, apply misting';
-        isWarning = true;
-    } else if (temp < 15) {
-        cause = 'Cold Stress';
-        solution = 'Provide heating/insulation';
-        isWarning = true;
-    }
-    
-    if (soil < 30) {
-        cause = 'Hydration deficit';
-        solution = 'Increase irrigation frequency';
-        isWarning = true;
-    } else if (soil > 80) {
-        cause = 'Excess hydration';
-        solution = 'Improve drainage, pause watering';
-        isWarning = true;
+    // Disease Analysis
+    if (hum > 80 && temp < 24) {
+        disease = 'Powdery Mildew';
+        solution = 'Increase airflow and apply Neem oil';
+        isCritical = true;
+    } else if (soil < soil_min && previousBioSignal !== null && bio < previousBioSignal) {
+        disease = 'Dehydration Stress';
+        solution = 'Immediate Irrigation Required';
+        isCritical = true;
     }
 
-    if (bio < 300) { // Erratic/Low bio signal
-        cause += ' (Plant Stress Detected from Bio-Signal)';
-        solution += ' (Monitor Closely)';
-        isWarning = true;
-    }
-    
-    // Specific Disease Intelligence overrides
-    if (hum > 85 && temp < 24) {
-        active = 'Powdery Mildew';
-        risk = 'Botrytis Cinerea';
-        cause = 'High humidity with cool air';
-        solution = 'Improve airflow & apply organic fungicide';
-        isCritical = true;
-        trend = 'Fungal proliferation highly likely';
-    } else if (soil < 20 && bio < 300) {
-        active = 'Dehydration';
-        risk = 'Leaf Scorching';
-        cause = 'Critical moisture loss & weak bio-signal';
-        solution = 'Immediate deep watering & provide shade';
-        isCritical = true;
-        trend = 'Rapid cellular damage occurring';
-    } else if (soil > 90 && hum > 80) {
-        active = 'Root Rot';
-        risk = 'Fungus Gnats';
-        cause = 'Waterlogging & excessive ambient moisture';
-        solution = 'Stop watering, aerate soil, apply H2O2 drench';
-        isCritical = true;
-        trend = 'Root suffocation imminent';
-    }
+    // Risk Forecast (Simplified)
+    if (hum > 85) risk = 'High Fungal Risk';
+    else if (temp > 35) risk = 'Heat Stress Risk';
 
     // Update UI
-    activeDiseaseAlert.innerText = active;
-    predictedRiskAlert.innerText = risk;
-    affectedDisease.innerText = active;
-    rootCause.innerText = cause;
-    immediateSolution.innerText = solution;
-    possibleFutureDiseases.innerText = risk;
-    
-    const trendAnalysis = document.getElementById('trend-analysis');
-    if (trendAnalysis) trendAnalysis.innerText = trend;
+    activeDiseaseEl.innerText = disease;
+    riskForecastEl.innerText = risk;
+    solutionStepsEl.innerText = solution;
 
-    // Visual formatting for Warning Panels
-    if (activeWarningPanel) {
-        activeWarningPanel.classList.remove('bg-red-500/20', 'border-red-500/50', 'bg-brand-800/50', 'border-white/5');
-        if (isCritical || active !== 'None') {
-            activeWarningPanel.classList.add('bg-red-500/20', 'border-red-500/50');
-            activeWarningPanel.querySelector('svg').classList.add('animate-pulse');
-        } else {
-            activeWarningPanel.classList.add('bg-brand-800/50', 'border-white/5');
-            activeWarningPanel.querySelector('svg').classList.remove('animate-pulse');
-        }
+    if (isCritical) {
+        triggerVoiceAlert(disease);
     }
 
-    if (riskWarningPanel) {
-        riskWarningPanel.classList.remove('bg-yellow-500/20', 'border-yellow-500/50', 'bg-brand-800/50', 'border-white/5');
-        if ((isCritical || isWarning || risk !== 'None') && risk !== 'None') {
-            riskWarningPanel.classList.add('bg-yellow-500/20', 'border-yellow-500/50');
-        } else {
-            riskWarningPanel.classList.add('bg-brand-800/50', 'border-white/5');
-        }
-    }
+    // Keep legacy UI updated for compatibility if elements exist
+    const oldActive = document.getElementById('active-disease-alert');
+    if (oldActive) oldActive.innerText = disease;
+    const oldAffected = document.getElementById('affected-disease');
+    if (oldAffected) oldAffected.innerText = disease;
+    const oldSolution = document.getElementById('immediate-solution');
+    if (oldSolution) oldSolution.innerText = solution;
 }
 
 // Ensure the function is accessible globally if needed, though setInterval will run it
@@ -248,10 +193,15 @@ let previousBioSignal = null;
 let lastAlertSpeakTime = 0; // Prevent spamming TTS
 
 function updateGrowthStage() {
-    // Set 'Date Planted' to 30 days ago
+    const cropSelector = document.getElementById('crop-selector');
+    let crop = cropSelector ? cropSelector.value : 'Tomato';
+    
     const currentDate = new Date();
-    const datePlanted = new Date(currentDate.getTime() - (30 * 24 * 60 * 60 * 1000));
-    const totalDays = 90;
+    const datePlanted = new Date('2026-03-01');
+    let totalDays = 90; // Default for Tomato
+    
+    if (crop === 'Aloe Vera') totalDays = 365;
+    if (crop === 'Spinach') totalDays = 45;
     
     const diffTime = Math.abs(currentDate - datePlanted);
     const daysSincePlanting = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -262,21 +212,30 @@ function updateGrowthStage() {
     if (daysPlantedEl) daysPlantedEl.innerText = daysSincePlanting;
     
     const harvestDaysEl = document.getElementById('info-harvest-days');
-    if (harvestDaysEl) harvestDaysEl.innerText = `${daysLeft} Days Left`;
+    if (harvestDaysEl) harvestDaysEl.innerText = `${daysLeft} Days to Harvest`;
     
-    const progressEl = document.getElementById('growth-progress-bar');
+    const progressEl = document.getElementById('growth-bar');
     if (progressEl) progressEl.style.width = `${progressPercent}%`;
 }
 
 function calculateVPD(temp, hum) {
-    if (!temp || !hum) return;
-    // SVP in kPa using formula: 0.61078 * exp(17.27 * T / (T + 237.3))
+    if (temp === undefined || hum === undefined) return;
+    
+    // SVP calculation: SVP = 0.61078 * e^(17.27 * T / (T + 237.3))
     const svp = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
-    const avp = svp * (hum / 100);
-    const vpd = svp - avp;
+    // VPD calculation: VPD = SVP * (1 - H/100)
+    const vpd = svp * (1 - hum / 100);
     
     const vpdValEl = document.getElementById('vpd-value');
     if (vpdValEl) vpdValEl.innerText = vpd.toFixed(2);
+    
+    const vpdGaugeBar = document.getElementById('vpd-gauge-bar');
+    const vpdMarker = document.getElementById('vpd-marker');
+    if (vpdGaugeBar && vpdMarker) {
+        // Map VPD 0-2.0 kPa to 0-100%
+        const percent = Math.min(100, Math.max(0, (vpd / 2.0) * 100));
+        vpdMarker.style.left = `${percent}%`;
+    }
     
     const vpdStatusEl = document.getElementById('vpd-status');
     if (vpdStatusEl) {
@@ -294,76 +253,21 @@ function calculateVPD(temp, hum) {
     }
 }
 
+// Environment Check logic
+let highLightHours = 0;
+const SAMPLES_PER_HOUR = 240; // 15 sec sync = 4 samples per min * 60 min
+
 function performDiagnosticCenter(temp, hum, soil, bio, light) {
-    let issue = 'None (Healthy)';
-    let analysis = 'All environmental and biopotential signatures indicate optimal conditions.';
-    let solution = 'Continue current regimen.';
-    let overrideAlert = false;
-
-    // 1. Analyze historical tracking
-    if (previousBioSignal !== null && bio !== null) {
-        const dropRatio = previousBioSignal > 0 ? (previousBioSignal - bio) / previousBioSignal : 0;
-        if (dropRatio > 0.20) {
-            issue = 'Plant Stress Detected';
-            analysis = `Bio-Signal dropped suddenly by ${(dropRatio * 100).toFixed(1)}% compared to previous reading.`;
-            solution = 'Inspect plant immediately for physical damage or acute stress.';
-            overrideAlert = true;
-        }
-    }
-    
-    // Fallbacks if no sudden overriding drop
-    if (!overrideAlert) {
-         if (temp > 35) {
-             issue = 'Heat Stress';
-             analysis = `Temperature is elevated at ${temp}°C, risking transpiration breakdown.`;
-             solution = 'Increase ventilation and provide cooling/shade.';
-             overrideAlert = true;
-         } else if (soil < 30) {
-             issue = 'Severe Dehydration';
-             analysis = `Soil moisture is extremely low (${soil}%).`;
-             solution = 'Initiate immediate deep watering.';
-             overrideAlert = true;
-         } else if (hum > 85 && temp < 24) {
-             issue = 'High Fungal Risk / Powdery Mildew';
-             analysis = `High humidity (${hum}%) paired with low temp (${temp}°C) creates ideal mold conditions.`;
-             solution = 'Improve airflow and reduce ambient humidity.';
-             overrideAlert = true;
-         } else if (soil > 85 && hum > 80) {
-             issue = 'Root Rot Susceptibility';
-             analysis = `Waterlogged soil and high humidity suffocating root system.`;
-             solution = 'Hold off watering; optionally treat soil with H2O2.';
-             overrideAlert = true;
-         }
-    }
-
-    // Light Analysis -> Indoor/Outdoor Suggestion
-    const suggestionEl = document.getElementById('diag-environment-suggestion');
-    let suggestionText = 'Evaluating...';
-    if (light < 200) {
-        suggestionText = 'Indoors: Current light is poor. Consider supplementary grow lights or moving outdoors.';
-    } else if (light >= 200 && light <= 1000) {
-        suggestionText = 'Indoors/Outdoors: Good diffuse light. Ideal for vegetative growth.';
+    // Environment Check
+    const envTypeEl = document.getElementById('environment-type');
+    if (light > 800) {
+        highLightHours += (1 / SAMPLES_PER_HOUR);
     } else {
-        suggestionText = 'Outdoors: High intensity light. Ensure plant is acclimatized to avoid sunscald.';
+        // Maybe reset or slowly decrease? For now let's just count.
     }
-    
-    const diagIssueEl = document.getElementById('diag-detected-issue');
-    const diagAnalysisEl = document.getElementById('diag-analysis');
-    const diagSolutionEl = document.getElementById('diag-solution');
-    
-    if (diagIssueEl) {
-        diagIssueEl.innerText = issue;
-        if (overrideAlert) {
-            diagIssueEl.className = 'text-sm font-bold text-red-500';
-            triggerVoiceAlert(issue);
-        } else {
-            diagIssueEl.className = 'text-sm font-bold text-white';
-            updateVoiceStatus('Idle', 'bg-slate-500');
-        }
-    }
-    if (diagAnalysisEl) diagAnalysisEl.innerText = analysis;
-    if (diagSolutionEl) diagSolutionEl.innerText = solution;
-    if (suggestionEl) suggestionEl.innerText = suggestionText;
+
+    let envType = highLightHours > 6 ? 'Outdoor/Full Sun' : 'Indoor/Shade';
+    if (envTypeEl) envTypeEl.innerText = envType;
 
     // Save previous bio-signal at end of fetch cycle
     if (bio !== null && bio !== undefined) {
@@ -373,18 +277,15 @@ function performDiagnosticCenter(temp, hum, soil, bio, light) {
 
 function triggerVoiceAlert(alertText) {
     const now = Date.now();
-    // Throttle voice alerts to at most once per 60 seconds to prevent spam
+    // Throttle voice alerts to at most once per 60 seconds
     if (now - lastAlertSpeakTime > 60000) {
         if ('speechSynthesis' in window) {
             updateVoiceStatus('Speaking...', 'bg-red-500 animate-pulse');
-            const msg = new SpeechSynthesisUtterance(`Critical alert triggered: ${alertText}`);
+            const msg = new SpeechSynthesisUtterance(`Warning: ${alertText} detected. Please check the solution panel`);
             msg.rate = 1.0;
-            msg.pitch = 1.1;
+            msg.pitch = 1.0;
             msg.onend = () => {
-                updateVoiceStatus('Cooldown', 'bg-yellow-500');
-                setTimeout(() => {
-                    updateVoiceStatus('Idle', 'bg-slate-500');
-                }, 3000);
+                updateVoiceStatus('Idle', 'bg-slate-500');
             };
             window.speechSynthesis.speak(msg);
             lastAlertSpeakTime = now;

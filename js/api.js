@@ -29,7 +29,7 @@ class IoTAPI {
             const readKey = 'PBQKMLNVD8NR9G2X';  // Replace with your actual Read API Key
 
             // 2. Fetch the LATEST entry from the Cloud
-            const res = await fetch(`https://api.thingspeak.com/channels/${channelId}/feeds/last.json?api_key=${readKey}`);
+            const res = await fetch(`https://api.thingspeak.com/channels/3312822/feeds.json?api_key=PBQKMLNVD8NR9G2X&results=2`);
 
             if (!res.ok) throw new Error("Connection to ThingSpeak Failed");
 

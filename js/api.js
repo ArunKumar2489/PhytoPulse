@@ -42,8 +42,8 @@ async function fetchThingSpeakData() {
             // Real-Time Stress Analysis
             analyzePlantHealth(feed);
 
-            // AI Diagnostic Report
-            analyzeCropHealth(
+            // Real-Time Diagnostic Engine
+            runExpertSystem(
                 parseFloat(feed.field1),
                 parseFloat(feed.field2),
                 parseFloat(feed.field3),
@@ -123,45 +123,57 @@ function analyzePlantHealth(feed) {
     }
 }
 
-function analyzeCropHealth(temp, hum, soil, light) {
-    const diagnosticOutput = document.getElementById('diagnostic-output');
-    const detectedIssue = document.getElementById('detected-issue');
-    const recommendedAction = document.getElementById('recommended-action');
+function runExpertSystem(temp, hum, soil, light) {
+    const alertStatus = document.getElementById('alert-status');
+    const rootCause = document.getElementById('root-cause');
+    const diseasePrediction = document.getElementById('disease-prediction');
+    const treatmentPlan = document.getElementById('treatment-plan');
+    const diagnosticCenter = document.getElementById('diagnostic-center');
 
-    if (!diagnosticOutput || !detectedIssue || !recommendedAction) return;
+    if (!alertStatus || !rootCause || !diseasePrediction || !treatmentPlan) return;
 
-    let issue = 'No Stress Detected';
-    let action = 'Continue current maintenance.';
-    let isHealthy = true;
+    let alert = 'Normal';
+    let cause = 'Conditions within bounds';
+    let disease = 'None';
+    let treatment = 'Maintain current schedule';
 
-    // Scenario A (Root Rot/Overwatering)
-    if (soil > 80 && hum > 70) {
-        issue = 'Potential Root Rot';
-        action = 'Stop irrigation immediately and check drainage.';
-        isHealthy = false;
+    if (hum > 80 && temp < 25) {
+        alert = 'High Risk';
+        cause = 'Excessive humidity and cool air';
+        disease = 'Downy Mildew or Leaf Spot';
+        treatment = 'Reduce misting and apply organic fungicide';
+    } else if (temp > 38 && soil < 20) {
+        alert = 'Critical';
+        cause = 'High evaporation and low moisture';
+        disease = 'Bacterial Wilt';
+        treatment = 'Increase irrigation frequency and provide 50% shade';
+    } else if (soil > 90) {
+        alert = 'Warning';
+        cause = 'Waterlogging/Poor drainage';
+        disease = 'Pythium Root Rot';
+        treatment = 'Stop watering and aerate the soil';
     }
-    // Scenario B (Heat Stress/Wilting)
-    else if (temp > 38 && soil < 30) {
-        issue = 'Acute Heat Stress';
-        action = 'Activate misting system or provide shade.';
-        isHealthy = false;
-    }
-    // Scenario C (Fungal Growth)
-    else if (hum > 85 && temp >= 20 && temp <= 25) {
-        issue = 'High Fungal Risk (Powdery Mildew)';
-        action = 'Increase ventilation and reduce humidity.';
-        isHealthy = false;
+
+    alertStatus.innerText = alert;
+    rootCause.innerText = cause;
+    diseasePrediction.innerText = disease;
+    treatmentPlan.innerHTML = `<li>${treatment}</li>`;
+
+    // Visual formatting based on alert level
+    alertStatus.className = 'text-lg font-bold transition-all duration-300';
+    if (diagnosticCenter) {
+        diagnosticCenter.classList.remove('bg-red-500/20', 'border-red-500/50', 'bg-orange-500/20', 'border-orange-500/50', 'bg-green-500/20', 'border-green-500/50', 'border-white/10');
     }
 
-    detectedIssue.innerText = issue;
-    recommendedAction.innerText = action;
-
-    // Visual Feedback
-    diagnosticOutput.classList.remove('bg-green-500/20', 'border-green-500/50', 'bg-orange-500/20', 'border-orange-500/50', 'border-white/10');
-    if (isHealthy) {
-        diagnosticOutput.classList.add('bg-green-500/20', 'border-green-500/50');
+    if (alert === 'Critical') {
+        alertStatus.classList.add('text-red-500', 'animate-pulse');
+        if (diagnosticCenter) diagnosticCenter.classList.add('bg-red-500/20', 'border-red-500/50');
+    } else if (alert === 'High Risk' || alert === 'Warning') {
+        alertStatus.classList.add('text-orange-500');
+        if (diagnosticCenter) diagnosticCenter.classList.add('bg-orange-500/20', 'border-orange-500/50');
     } else {
-        diagnosticOutput.classList.add('bg-orange-500/20', 'border-orange-500/50');
+        alertStatus.classList.add('text-green-500');
+        if (diagnosticCenter) diagnosticCenter.classList.add('bg-green-500/20', 'border-green-500/50');
     }
 }
 

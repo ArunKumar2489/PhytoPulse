@@ -5,8 +5,8 @@
 
 class IoTAPI {
     constructor() {
-        this.channelId = 'INSERT_ID';
-        this.readKey = 'INSERT_KEY';
+        this.channelId = '3312822';
+        this.readKey = 'PBQKMLNVD8NR9G2X';
         this.autoInterval = null;
     }
 
@@ -24,46 +24,40 @@ class IoTAPI {
 
     async analyzePlantHealth() {
         try {
-            // Live fetch attempt:
-            /*
-            const res = await fetch(`https://api.thingspeak.com/channels/${this.channelId}/feeds/last.json?api_key=${this.readKey}`);
+            // 1. Enter your specific ThingSpeak Credentials
+            const channelId = '3312822'; // Replace with your actual Channel ID
+            const readKey = 'PBQKMLNVD8NR9G2X';  // Replace with your actual Read API Key
+
+            // 2. Fetch the LATEST entry from the Cloud
+            const res = await fetch(`https://api.thingspeak.com/channels/${channelId}/feeds/last.json?api_key=${readKey}`);
+
+            if (!res.ok) throw new Error("Connection to ThingSpeak Failed");
+
             const data = await res.json();
-            const voltage = parseFloat(data.field1);
-            const temp = parseFloat(data.field2);
-            const moisture = parseFloat(data.field3);
-            */
 
-            // Simulation fallback for demonstration
-            const data = this.simulateDataPull();
-            const voltage = parseFloat(data.field1);
-            const moisture = parseFloat(data.field3);
-            const temp = parseFloat(data.field2);
+            // 3. Map ThingSpeak Fields to PhytoPulse Variables
+            // Ensure these match your ESP32 Field setup!
+            const voltage = parseFloat(data.field4);  // Bio-signal
+            const temp = parseFloat(data.field1);     // Temperature
+            const moisture = parseFloat(data.field3);  // Soil Moisture
 
-            // Update store
-            window.appStore.updateTelemetry({ voltage: voltage.toFixed(1), temp: temp.toFixed(1), moisture: moisture.toFixed(1) });
+            // 4. Update your Dashboard Store (UI will change instantly)
+            window.appStore.updateTelemetry({
+                voltage: voltage.toFixed(1),
+                temp: temp.toFixed(1),
+                moisture: moisture.toFixed(1)
+            });
 
-            // Update individual sensor statuses with simulated connectivity fluctuations
-            const getSimStatus = (baseSignal) => {
-                const rand = Math.random();
-                if (rand > 0.95) return { state: 'OFFLINE', signal: 0 };
-                if (rand > 0.85) return { state: 'STALE', signal: Math.floor(baseSignal * 0.4) };
-                return { state: 'ONLINE', signal: Math.floor(baseSignal + (Math.random() * (100 - baseSignal))) };
-            };
-
-            window.appStore.updateSensorStatus('voltage', getSimStatus(95));
-            window.appStore.updateSensorStatus('temp', getSimStatus(90));
-            window.appStore.updateSensorStatus('moisture', getSimStatus(92));
-
-            // Real-Time Stress Detection
+            // 5. Run your Diagnostic Engine on the REAL data
             this.analyzeBiologicalState(voltage, moisture);
 
-            // Document sync time
+            // Update the Sync Timestamp on the UI
             const now = new Date();
             const el = document.getElementById('last-sync');
             if (el) el.innerText = `Last Sync: ${now.toLocaleTimeString()}`;
 
         } catch (e) {
-            console.error("Fetch Error:", e);
+            console.error("IoT Sync Error:", e);
         }
     }
 

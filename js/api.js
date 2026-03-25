@@ -60,6 +60,16 @@ async function fetchThingSpeakData() {
                 parseFloat(feed.field4) || 0,
                 parseFloat(feed.field4) || 0
             );
+
+            // ML & Predictive Analytics
+            const _t = parseFloat(feed.field1) || 0;
+            const _h = parseFloat(feed.field2) || 0;
+            const _s = parseFloat(feed.field3) || 0;
+            const _b = parseFloat(feed.field4) || 0;
+            updateMoisturePrediction(_s);
+            detectBioAnomaly(_b);
+            getHealthProbability(_t, _h, _s);
+            updateLifeCycleScore(isCriticalCondition(_t, _h, _s));
         }
     } catch (error) {
         console.error("Error fetching ThingSpeak data:", error);
@@ -192,6 +202,12 @@ window.fetchThingSpeakData = fetchThingSpeakData;
 let previousBioSignal = null;
 let lastAlertSpeakTime = 0; // Prevent spamming TTS
 
+// ─── ML & Predictive Analytics State ──────────────────────────────────────────
+let moistureHistory = [];   // {value, time} — last 5 soil moisture readings
+let bioHistory = [];        // raw values — last 3 bio-signal readings
+let lifeCycleScore = 100;   // Harvest Quality score (0-100)
+let lastScoreDeductTime = 0; // throttle: one deduction per fetch cycle
+
 function updateGrowthStage() {
     const cropSelector = document.getElementById('crop-selector');
     let crop = cropSelector ? cropSelector.value : 'Tomato';
@@ -297,6 +313,157 @@ function updateVoiceStatus(text, dotClass) {
     const vStatus = document.getElementById('voice-alert-status');
     if (vStatus) {
         vStatus.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dotClass}"></span> Voice Alerts: ${text}`;
+    }
+}
+
+// ─── ML Function 1: Predictive Logic – Time-to-Water ─────────────────────────
+function updateMoisturePrediction(moisture) {
+    const now = Date.now();
+    moistureHistory.push({ value: moisture, time: now });
+    if (moistureHistory.length > 5) moistureHistory.shift();
+
+    const ttw = document.getElementById('time-to-water');
+    if (!ttw) return;
+
+    if (moistureHistory.length < 2) {
+        ttw.innerText = 'Collecting data...';
+        return;
+    }
+
+    const oldest = moistureHistory[0];
+    const latest = moistureHistory[moistureHistory.length - 1];
+    const timeSpanHours = (latest.time - oldest.time) / (1000 * 60 * 60) || (1 / 240);
+    const rate = (latest.value - oldest.value) / timeSpanHours; // negative = declining
+
+    if (rate >= 0) {
+        ttw.innerText = 'Stable – No decline detected';
+        ttw.style.color = '#64ffda';
+        return;
+    }
+
+    const hoursLeft = (latest.value - 20) / Math.abs(rate);
+    if (hoursLeft <= 0) {
+        ttw.innerText = 'Critical – Water NOW!';
+        ttw.style.color = '#ef4444';
+    } else {
+        ttw.innerText = `≈ ${hoursLeft.toFixed(1)} hrs`;
+        ttw.style.color = hoursLeft < 3 ? '#fbbf24' : '#64ffda';
+    }
+
+    const rateEl = document.getElementById('moisture-rate');
+    if (rateEl) rateEl.innerText = `${rate.toFixed(2)}%/hr`;
+}
+
+// ─── ML Function 2: Anomaly Detection – Bio-Signal ────────────────────────────
+function detectBioAnomaly(bio) {
+    if (isNaN(bio) || bio === 0) return;
+    bioHistory.push(bio);
+    if (bioHistory.length > 3) bioHistory.shift();
+
+    const alertEl = document.getElementById('anomaly-alert');
+    const normalEl = document.getElementById('anomaly-normal');
+    if (!alertEl) return;
+
+    if (bioHistory.length < 3) return;
+
+    const avg = bioHistory.reduce((a, b) => a + b, 0) / bioHistory.length;
+    const deviation = Math.abs(bio - avg) / (avg || 1);
+
+    if (deviation > 0.30) {
+        alertEl.classList.remove('hidden');
+        if (normalEl) normalEl.classList.add('hidden');
+    } else {
+        alertEl.classList.add('hidden');
+        if (normalEl) normalEl.classList.remove('hidden');
+    }
+}
+
+// ─── ML Function 3: Disease Probability Matrix (Naive Bayes-style) ────────────
+function getHealthProbability(temp, hum, soil) {
+    let dehydration = 0, fungal = 0, optimal = 0;
+
+    // Dehydration weights
+    if (soil < 30) dehydration += 50;
+    if (temp > 35) dehydration += 30;
+    if (hum < 30) dehydration += 20;
+
+    // Fungal weights
+    if (hum > 80) fungal += 50;
+    if (temp < 25) fungal += 30;
+    if (soil > 75) fungal += 20;
+
+    // Optimal weights
+    if (soil >= 40 && soil <= 70) optimal += 40;
+    if (temp >= 20 && temp <= 30) optimal += 35;
+    if (hum >= 40 && hum <= 70) optimal += 25;
+
+    const total = dehydration + fungal + optimal || 1;
+    const dPct = Math.round((dehydration / total) * 100);
+    const fPct = Math.round((fungal / total) * 100);
+    const oPct = Math.max(0, 100 - dPct - fPct);
+
+    const matrix = document.getElementById('probability-matrix');
+    if (!matrix) return;
+
+    const barColor = (pct, type) => {
+        if (type === 'optimal') return '#4ade80';
+        return pct > 50 ? '#ef4444' : pct > 25 ? '#fbbf24' : '#64748b';
+    };
+
+    matrix.innerHTML = [
+        { label: '🔥 Dehydration Risk', pct: dPct, type: 'dehydration' },
+        { label: '🍄 Fungal Risk',      pct: fPct, type: 'fungal' },
+        { label: '✅ Optimal',           pct: oPct, type: 'optimal' }
+    ].map(({ label, pct, type }) => `
+        <div class="mb-3">
+            <div class="flex justify-between items-center text-xs mb-1">
+                <span class="text-slate-300 font-medium">${label}</span>
+                <span class="font-bold" style="color:${barColor(pct, type)}">${pct}%</span>
+            </div>
+            <div class="w-full h-2 bg-slate-800/80 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700"
+                    style="width:${pct}%; background:${barColor(pct, type)}; box-shadow: 0 0 6px ${barColor(pct, type)}80"></div>
+            </div>
+        </div>`
+    ).join('');
+}
+
+// ─── ML Function 4: Harvest Quality Forecast – LifeCycle Score ────────────────
+function isCriticalCondition(temp, hum, soil) {
+    return (soil < 30 || temp > 35 || (hum > 80 && temp < 25));
+}
+
+function updateLifeCycleScore(isCritical) {
+    if (isCritical) {
+        const now = Date.now();
+        // Only deduct once per fetch cycle (15s throttle)
+        if (now - lastScoreDeductTime > 14000) {
+            lifeCycleScore = Math.max(0, lifeCycleScore - 1);
+            lastScoreDeductTime = now;
+        }
+    }
+
+    const scoreEl = document.getElementById('lifecycle-score-text');
+    const barEl   = document.getElementById('lifecycle-gauge-bar');
+    const labelEl = document.getElementById('lifecycle-score-label');
+
+    if (scoreEl) scoreEl.innerText = `${lifeCycleScore}%`;
+
+    if (barEl) {
+        barEl.style.width = `${lifeCycleScore}%`;
+        if (lifeCycleScore >= 70) {
+            barEl.style.background = 'linear-gradient(90deg, #4ade80, #64ffda)';
+        } else if (lifeCycleScore >= 40) {
+            barEl.style.background = 'linear-gradient(90deg, #fbbf24, #f97316)';
+        } else {
+            barEl.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+        }
+    }
+
+    if (labelEl) {
+        if (lifeCycleScore >= 70) labelEl.innerText = 'Excellent';
+        else if (lifeCycleScore >= 40) labelEl.innerText = 'Moderate Stress';
+        else labelEl.innerText = 'Critical Damage';
     }
 }
 

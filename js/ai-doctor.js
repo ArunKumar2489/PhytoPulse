@@ -1,9 +1,15 @@
 /**
  * ai-doctor.js
- * Embedded AI Chat Interface with knowledge graph and persistence.
+ * AI Plant Doctor — Gemini-powered chatbot with live sensor context.
+ * Automatic diagnostic alerts from the knowledge graph are preserved.
  */
 
-// Generic Knowledge Graph extended for 4 distinct stress states across 4 crops
+// ── Gemini API Config ──────────────────────────────────────────────────────
+const GEMINI_API_KEY = 'AIzaSyAJx-vp21Lr7s-RNIsE5FQzZIZcut3OHZM';
+const GEMINI_ENDPOINT =
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+// ── Static Knowledge Graph (kept for auto-diagnostic alerts) ────────────────
 const BaseActions = {
     "SEVERE_DEHYDRATION": { cause: "Osmotic potential collapse causing wilting and stomatal closure.", action: "Apply systematic drip irrigation immediately. Supplement with 0.5% Potassium foliar spray to restore stomatal regulation." },
     "ANOXIC_STRESS": { cause: "Prolonged waterlogging restricts root respiration, increasing ethanol production and root tissue necrosis.", action: "Cease irrigation. Apply hydrogen peroxide (3% solution diluted 1:10) to root zone to oxygenate. Improve soil drainage immediately." },
@@ -19,52 +25,194 @@ const KNOWLEDGE_GRAPH = {
     "Corn": BaseActions
 };
 
+// ── AIDoctor Class ─────────────────────────────────────────────────────────
 class AIDoctor {
     constructor() {
         this.chatContainer = document.getElementById('chat-container');
-        this.input = document.getElementById('chat-input');
+        this.inputEl = document.getElementById('chat-input');
+        this.sendBtn = document.getElementById('chat-send-btn');
 
-        // Load chat history for tab persistence
+        // Load persisted chat history
         this.chatHistory = JSON.parse(localStorage.getItem('phyto_chat_hist') || '[]');
         this.lastDiagnostic = localStorage.getItem('phyto_last_diag');
 
-        // Render previously saved history
+        // Render saved history or default greeting
         if (this.chatContainer) {
             this.chatContainer.innerHTML = '';
             if (this.chatHistory.length === 0) {
                 const initCrop = window.appStore ? window.appStore.state.crop : 'Tomato';
-                this.addMessage('AI', `System initialized. Monitoring incoming telemetry for <strong class="text-brand-light">${initCrop}</strong>. Waiting for anomalies...`);
+                this._addAndRender('AI',
+                    `System initialized. Monitoring telemetry for <strong class="text-brand-light">${initCrop}</strong>. Ask me anything about your plant's health!`
+                );
             } else {
-                this.chatHistory.forEach(msg => {
-                    this._renderMessage(msg.sender, msg.text, msg.isProtocol);
-                });
+                this.chatHistory.forEach(msg => this._renderMessage(msg.sender, msg.text, msg.isProtocol, msg.isUser));
             }
         }
 
+        // State store subscription (auto-diagnostics)
         if (window.appStore) {
             window.appStore.subscribe(state => this.onStateChange(state));
         }
+
+        // Wire up send events
+        if (this.inputEl) {
+            this.inputEl.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    this.handleUserInput();
+                }
+            });
+        }
+        if (this.sendBtn) {
+            this.sendBtn.addEventListener('click', () => this.handleUserInput());
+        }
     }
 
-    addMessage(sender, text, isProtocol = false) {
-        this.chatHistory.push({ sender, text, isProtocol });
+    // ── Public: handle user typing and sending ────────────────────────────
+    async handleUserInput() {
+        if (!this.inputEl) return;
+        const text = this.inputEl.value.trim();
+        if (!text) return;
+
+        this.inputEl.value = '';
+        this.inputEl.disabled = true;
+        if (this.sendBtn) this.sendBtn.disabled = true;
+
+        // Show user bubble
+        this._addAndRender('USER', text, false, true);
+
+        // Show typing indicator
+        const typingId = this._showTypingIndicator();
+
+        try {
+            const reply = await this._callGemini(text);
+            this._removeTypingIndicator(typingId);
+            this._addAndRender('AI', reply);
+        } catch (err) {
+            console.error('[AI Doctor] Gemini error:', err);
+            this._removeTypingIndicator(typingId);
+            this._addAndRender('AI', '⚠️ Connection to AI failed. Please check your network and try again.');
+        } finally {
+            this.inputEl.disabled = false;
+            if (this.sendBtn) this.sendBtn.disabled = false;
+            this.inputEl.focus();
+        }
+    }
+
+    // ── Gemini API Call ───────────────────────────────────────────────────
+    async _callGemini(userMessage) {
+        const context = this._buildSensorContext();
+
+        const payload = {
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{
+                        text: `You are PhytoPulse AI Plant Doctor, a specialised assistant embedded inside the PhytoPulse IoT crop-monitoring dashboard.
+
+STRICT RULES — follow these exactly:
+1. You ONLY answer questions related to the plant and sensor data shown below. Topics you can address: plant health, crop care, disease diagnosis, irrigation, temperature/humidity recommendations, soil moisture, growth stages, pest/disease treatment, and the specific readings from the dashboard sensors.
+2. If the user asks ANYTHING unrelated to the current crop, plant care, or the PhytoPulse sensor data (e.g. coding, weather elsewhere, general knowledge, sports, politics, etc.), respond ONLY with: "I can only assist with questions about your monitored crop and sensor data. Please ask about plant health, diseases, or care recommendations."
+3. Always base your advice on the LIVE SENSOR DATA provided below. Reference the actual numbers in your reply.
+4. Keep answers to 2–4 sentences. Be specific and actionable.
+
+=== LIVE PhytoPulse SENSOR DATA ===
+${context}
+===================================
+
+User question: ${userMessage}`
+                    }]
+                }
+            ],
+            generationConfig: {
+                temperature: 0.4,
+                maxOutputTokens: 300
+            }
+        };
+
+        const response = await fetch(GEMINI_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errBody = await response.text();
+            throw new Error(`Gemini API ${response.status}: ${errBody}`);
+        }
+
+        const data = await response.json();
+        return data?.candidates?.[0]?.content?.parts?.[0]?.text
+            ?? 'I could not generate a response. Please try again.';
+    }
+
+    // ── Build live sensor context string ──────────────────────────────────
+    _buildSensorContext() {
+        const state = window.appStore?.state ?? {};
+        const lines = [
+            `Crop being monitored: ${state.crop ?? 'Unknown'}`,
+            `Temperature: ${state.temperature != null ? state.temperature + '°C' : 'No data'}`,
+            `Humidity: ${state.humidity != null ? state.humidity + '%' : 'No data'}`,
+            `Soil Moisture: ${state.moisture != null ? state.moisture + '%' : 'No data'}`,
+            `Light Level: ${state.light != null ? state.light + ' lx' : 'No data'}`,
+            `Active Diagnostic Alert: ${state.currentDiagnostic ?? 'None — all parameters nominal'}`,
+        ];
+        return lines.join('\n');
+    }
+
+    // ── Typing indicator ──────────────────────────────────────────────────
+    _showTypingIndicator() {
+        const id = 'typing-' + Date.now();
+        const div = document.createElement('div');
+        div.id = id;
+        div.className = 'flex items-start gap-3';
+        div.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-brand-800 border border-brand-light/30 flex items-center justify-center shrink-0">
+                <span class="text-brand-light text-xs font-bold">AI</span>
+            </div>
+            <div class="bg-brand-800/80 border border-white/5 rounded-2xl rounded-tl-sm p-3 flex items-center gap-1.5">
+                <span class="w-2 h-2 bg-brand-light rounded-full animate-bounce" style="animation-delay:0ms"></span>
+                <span class="w-2 h-2 bg-brand-light rounded-full animate-bounce" style="animation-delay:150ms"></span>
+                <span class="w-2 h-2 bg-brand-light rounded-full animate-bounce" style="animation-delay:300ms"></span>
+            </div>`;
+        this.chatContainer.appendChild(div);
+        this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
+        return id;
+    }
+
+    _removeTypingIndicator(id) {
+        document.getElementById(id)?.remove();
+    }
+
+    // ── Persist & render helpers ──────────────────────────────────────────
+    _addAndRender(sender, text, isProtocol = false, isUser = false) {
+        this.chatHistory.push({ sender, text, isProtocol, isUser });
         localStorage.setItem('phyto_chat_hist', JSON.stringify(this.chatHistory));
-        this._renderMessage(sender, text, isProtocol);
+        this._renderMessage(sender, text, isProtocol, isUser);
     }
 
-    _renderMessage(sender, text, isProtocol) {
+    _renderMessage(sender, text, isProtocol, isUser) {
         if (!this.chatContainer) return;
 
         const div = document.createElement('div');
-        div.className = 'flex items-start gap-3 animate-fade-in-up';
 
-        let senderHtml = '';
-        let bubbleHtml = '';
+        if (isUser) {
+            // Right-aligned user bubble
+            div.className = 'flex items-start gap-3 justify-end animate-fade-in-up';
+            div.innerHTML = `
+                <div class="bg-brand-light/10 border border-brand-light/20 rounded-2xl rounded-tr-sm p-3 text-slate-200 max-w-[80%]">
+                    <p>${this._escapeHtml(text)}</p>
+                </div>
+                <div class="w-8 h-8 rounded-full bg-brand-light/20 border border-brand-light/30 flex items-center justify-center shrink-0">
+                    <span class="text-brand-light text-xs font-bold">YOU</span>
+                </div>`;
+        } else {
+            div.className = 'flex items-start gap-3 animate-fade-in-up';
+            const avatar = `<div class="w-8 h-8 rounded-full bg-brand-800 border border-brand-light/30 flex items-center justify-center shrink-0"><span class="text-brand-light text-xs font-bold">AI</span></div>`;
 
-        if (sender === 'AI') {
-            senderHtml = `<div class="w-8 h-8 rounded-full bg-brand-800 border border-brand-light/30 flex items-center justify-center shrink-0"><span class="text-brand-light text-xs font-bold">AI</span></div>`;
+            let bubble;
             if (isProtocol) {
-                bubbleHtml = `
+                bubble = `
                     <div class="bg-brand-900 border border-brand-accent/50 rounded-2xl p-4 w-full shadow-[0_0_15px_rgba(74,222,128,0.1)]">
                         <div class="flex items-center gap-2 text-brand-accent mb-2">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -73,15 +221,20 @@ class AIDoctor {
                         <div class="text-slate-300 text-sm space-y-2">${text}</div>
                     </div>`;
             } else {
-                bubbleHtml = `<div class="bg-brand-800/80 border border-white/5 rounded-2xl rounded-tl-sm p-3 text-slate-300"><p>${text}</p></div>`;
+                bubble = `<div class="bg-brand-800/80 border border-white/5 rounded-2xl rounded-tl-sm p-3 text-slate-300 max-w-[90%]"><p>${text}</p></div>`;
             }
+            div.innerHTML = avatar + bubble;
         }
 
-        div.innerHTML = senderHtml + bubbleHtml;
         this.chatContainer.appendChild(div);
         this.chatContainer.scrollTop = this.chatContainer.scrollHeight;
     }
 
+    _escapeHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    // ── Auto-diagnostic alerts from knowledge graph ───────────────────────
     onStateChange(state) {
         const activeCrop = state.crop;
         const currentDiag = state.currentDiagnostic;
@@ -90,10 +243,10 @@ class AIDoctor {
             this.lastDiagnostic = currentDiag;
             localStorage.setItem('phyto_last_diag', currentDiag);
 
-            const profile = KNOWLEDGE_GRAPH[activeCrop] && KNOWLEDGE_GRAPH[activeCrop][currentDiag];
+            const profile = KNOWLEDGE_GRAPH[activeCrop]?.[currentDiag];
             if (profile) {
-                const diagName = currentDiag.replace('_', ' ');
-                this.addMessage('AI', `Alert Received: <strong>${diagName}</strong> detected in ${activeCrop}. Executing biological knowledge graph query...`);
+                const diagName = currentDiag.replace(/_/g, ' ');
+                this._addAndRender('AI', `🚨 Alert Received: <strong>${diagName}</strong> detected in ${activeCrop}. Executing biological knowledge graph query...`);
 
                 setTimeout(() => {
                     const protocolHtml = `
@@ -101,13 +254,13 @@ class AIDoctor {
                         <div class="h-px bg-white/10 my-2"></div>
                         <p><strong>Recommended Action:</strong><br/><span class="text-white">${profile.action}</span></p>
                     `;
-                    this.addMessage('AI', protocolHtml, true);
-                }, 1000); // Simulate processing time
+                    this._addAndRender('AI', protocolHtml, true);
+                }, 1000);
             }
         } else if (!currentDiag && this.lastDiagnostic !== null) {
             this.lastDiagnostic = null;
             localStorage.removeItem('phyto_last_diag');
-            this.addMessage('AI', "Metrics returned to nominal. Continuing automated monitoring.");
+            this._addAndRender('AI', '✅ Metrics returned to nominal. Continuing automated monitoring.');
         }
     }
 }

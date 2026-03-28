@@ -100,8 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
             elDiagAlert.classList.add('hidden');
         }
 
-        // Keep chat initial text updated if changed before any alerts
-        if (state.currentDiagnostic === null) {
+        // Keep chat initial text updated if it still exists in DOM
+        if (elChatCropName && state.currentDiagnostic === null) {
             elChatCropName.innerText = state.crop;
         }
     });
